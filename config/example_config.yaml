@@ -1,0 +1,16 @@
+cutoff_date: "2021-11-01T00:00:00"
+output_dir: "data/raw"
+request_timeout: 20
+rate_limit_sleep: 1.5
+packages:
+  - ecosystem: "pypi"
+    name: "log4j"
+    repo_url: "apache/logging-log4j2"
+    metadata:
+      notes: "Historical Log4Shell validation target"
+  - ecosystem: "maven"
+    name: "org.apache.logging.log4j:log4j-core"
+    repo_url: "apache/logging-log4j2"
+  - ecosystem: "npm"
+    name: "event-stream"
+    repo_url: "dominictarr/event-stream"
