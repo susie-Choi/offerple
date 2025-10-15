@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -12,6 +13,11 @@ try:
 except ImportError:
     print("neo4j driver not installed. Run: pip install neo4j")
     exit(1)
+
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 logger = logging.getLogger(__name__)
@@ -204,15 +210,33 @@ class CVEGraphLoader:
 def main():
     parser = argparse.ArgumentParser(description="Load CVE data into Neo4j")
     parser.add_argument("jsonl_file", type=Path, help="Path to CVE JSONL file")
-    parser.add_argument("--uri", default="bolt://localhost:7687", help="Neo4j URI")
-    parser.add_argument("--username", default="neo4j", help="Neo4j username")
-    parser.add_argument("--password", required=True, help="Neo4j password")
+    parser.add_argument(
+        "--uri",
+        help="Neo4j URI (default: from NEO4J_URI env var or bolt://localhost:7687)",
+    )
+    parser.add_argument(
+        "--username",
+        help="Neo4j username (default: from NEO4J_USERNAME env var or 'neo4j')",
+    )
+    parser.add_argument(
+        "--password",
+        help="Neo4j password (default: from NEO4J_PASSWORD env var)",
+    )
     parser.add_argument("--log-level", default="INFO", help="Logging level")
 
     args = parser.parse_args()
     logging.basicConfig(level=getattr(logging, args.log_level.upper()))
 
-    loader = CVEGraphLoader(args.uri, args.username, args.password)
+    # Get Neo4j credentials from args or env
+    neo4j_uri = args.uri or os.getenv("NEO4J_URI", "bolt://localhost:7687")
+    neo4j_username = args.username or os.getenv("NEO4J_USERNAME", "neo4j")
+    neo4j_password = args.password or os.getenv("NEO4J_PASSWORD")
+    
+    if not neo4j_password:
+        logger.error("Neo4j password required. Set --password or NEO4J_PASSWORD env var")
+        return
+
+    loader = CVEGraphLoader(neo4j_uri, neo4j_username, neo4j_password)
     try:
         logger.info("Creating constraints...")
         loader.create_constraints()

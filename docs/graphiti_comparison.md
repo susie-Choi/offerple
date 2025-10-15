@@ -47,38 +47,37 @@ python scripts/load_cve_to_neo4j.py data/raw/cve_data.jsonl \
 
 ### 실행 방법
 
-#### OpenAI 사용
+#### 1. 환경 설정
 ```bash
-# 1. Graphiti 설치
-pip install graphiti-core
+# .env 파일 생성 (또는 .env.example을 복사)
+cp .env.example .env
 
-# 2. OpenAI API 키 설정
-export OPENAI_API_KEY=your-api-key
-
-# 3. CVE 데이터 로드
-python scripts/load_cve_with_graphiti.py data/raw/cve_data.jsonl \
-  --uri neo4j+s://26e236b3.databases.neo4j.io \
-  --username neo4j \
-  --password <password> \
-  --llm-provider openai
+# .env 파일 편집하여 설정값 입력
+# NEO4J_URI=neo4j+s://xxxxx.databases.neo4j.io
+# NEO4J_USERNAME=neo4j
+# NEO4J_PASSWORD=your-password
+# GOOGLE_API_KEY=your-gemini-api-key  (또는 OPENAI_API_KEY)
 ```
 
-#### Google Gemini 사용 (무료 티어 가능!)
+#### 2. Graphiti 설치
 ```bash
-# 1. Graphiti 설치
 pip install graphiti-core
-
-# 2. Google Gemini API 키 설정
-# https://aistudio.google.com/app/apikey 에서 발급
-export GOOGLE_API_KEY=your-api-key
-
-# 3. CVE 데이터 로드
-python scripts/load_cve_with_graphiti.py data/raw/cve_data.jsonl \
-  --uri neo4j+s://26e236b3.databases.neo4j.io \
-  --username neo4j \
-  --password <password> \
-  --llm-provider gemini
 ```
+
+#### 3. CVE 데이터 로드
+
+**OpenAI 사용:**
+```bash
+python scripts/load_cve_with_graphiti.py data/raw/cve_data.jsonl --llm-provider openai
+```
+
+**Google Gemini 사용 (무료 티어 가능!):**
+```bash
+# https://aistudio.google.com/app/apikey 에서 API 키 발급
+python scripts/load_cve_with_graphiti.py data/raw/cve_data.jsonl --llm-provider gemini
+```
+
+모든 설정은 `.env` 파일에서 자동으로 로드됩니다.
 
 ### Graphiti가 추출할 수 있는 것들
 - **명시적 엔티티**: CVE ID, 제품명, 벤더명, CWE ID

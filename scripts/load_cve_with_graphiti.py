@@ -16,6 +16,10 @@ except ImportError:
     exit(1)
 
 from neo4j import GraphDatabase
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 logger = logging.getLogger(__name__)
@@ -177,12 +181,21 @@ def main():
         description="Load CVE data into Neo4j using Graphiti"
     )
     parser.add_argument("jsonl_file", type=Path, help="Path to CVE JSONL file")
-    parser.add_argument("--uri", default="neo4j+s://26e236b3.databases.neo4j.io", help="Neo4j URI")
-    parser.add_argument("--username", default="neo4j", help="Neo4j username")
-    parser.add_argument("--password", required=True, help="Neo4j password")
+    parser.add_argument(
+        "--uri",
+        help="Neo4j URI (default: from NEO4J_URI env var)",
+    )
+    parser.add_argument(
+        "--username",
+        help="Neo4j username (default: from NEO4J_USERNAME env var or 'neo4j')",
+    )
+    parser.add_argument(
+        "--password",
+        help="Neo4j password (default: from NEO4J_PASSWORD env var)",
+    )
     parser.add_argument(
         "--api-key",
-        help="LLM API key (OpenAI or Google Gemini). Can also use OPENAI_API_KEY or GOOGLE_API_KEY env var",
+        help="LLM API key (default: from OPENAI_API_KEY or GOOGLE_API_KEY env var)",
     )
     parser.add_argument(
         "--llm-provider",
@@ -197,6 +210,18 @@ def main():
         level=getattr(logging, args.log_level.upper()),
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
+    
+    # Get Neo4j credentials from args or env
+    neo4j_uri = args.uri or os.getenv("NEO4J_URI")
+    neo4j_username = args.username or os.getenv("NEO4J_USERNAME", "neo4j")
+    neo4j_password = args.password or os.getenv("NEO4J_PASSWORD")
+    
+    if not neo4j_uri:
+        logger.error("Neo4j URI required. Set --uri or NEO4J_URI env var")
+        return
+    if not neo4j_password:
+        logger.error("Neo4j password required. Set --password or NEO4J_PASSWORD env var")
+        return
     
     # Get API key based on provider
     if args.llm_provider == "openai":
@@ -215,9 +240,9 @@ def main():
     asyncio.run(
         load_cve_with_graphiti(
             args.jsonl_file,
-            args.uri,
-            args.username,
-            args.password,
+            neo4j_uri,
+            neo4j_username,
+            neo4j_password,
             api_key,
             args.llm_provider,
         )
