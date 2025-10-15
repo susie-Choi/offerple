@@ -1,7 +1,6 @@
 __pycache__/
 *.pyc
 .venv/
-data/
 .env
 
 # Kiro IDE - Include steering and specs, but exclude temporary files
