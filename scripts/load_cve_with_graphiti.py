@@ -98,19 +98,33 @@ async def load_cve_with_graphiti(
     neo4j_uri: str,
     neo4j_user: str,
     neo4j_password: str,
-    openai_api_key: str,
+    api_key: str,
+    llm_provider: str = "openai",
 ):
     """Load CVE data using Graphiti for automatic graph construction."""
     
     logger.info(f"Initializing Graphiti with Neo4j at {neo4j_uri}")
+    logger.info(f"Using LLM provider: {llm_provider}")
     
-    # Initialize Graphiti
-    graphiti = Graphiti(
-        neo4j_uri=neo4j_uri,
-        neo4j_user=neo4j_user,
-        neo4j_password=neo4j_password,
-        openai_api_key=openai_api_key,
-    )
+    # Initialize Graphiti with appropriate API key
+    if llm_provider == "openai":
+        graphiti = Graphiti(
+            neo4j_uri=neo4j_uri,
+            neo4j_user=neo4j_user,
+            neo4j_password=neo4j_password,
+            openai_api_key=api_key,
+        )
+    elif llm_provider == "gemini":
+        # For Gemini, we need to set the environment variable
+        os.environ["GOOGLE_API_KEY"] = api_key
+        graphiti = Graphiti(
+            neo4j_uri=neo4j_uri,
+            neo4j_user=neo4j_user,
+            neo4j_password=neo4j_password,
+            llm_provider="google",  # Graphiti uses "google" for Gemini
+        )
+    else:
+        raise ValueError(f"Unsupported LLM provider: {llm_provider}")
     
     logger.info(f"Loading CVE data from {jsonl_path}")
     
@@ -166,7 +180,16 @@ def main():
     parser.add_argument("--uri", default="neo4j+s://26e236b3.databases.neo4j.io", help="Neo4j URI")
     parser.add_argument("--username", default="neo4j", help="Neo4j username")
     parser.add_argument("--password", required=True, help="Neo4j password")
-    parser.add_argument("--openai-api-key", help="OpenAI API key (or set OPENAI_API_KEY env var)")
+    parser.add_argument(
+        "--api-key",
+        help="LLM API key (OpenAI or Google Gemini). Can also use OPENAI_API_KEY or GOOGLE_API_KEY env var",
+    )
+    parser.add_argument(
+        "--llm-provider",
+        choices=["openai", "gemini"],
+        default="openai",
+        help="LLM provider to use (default: openai)",
+    )
     parser.add_argument("--log-level", default="INFO", help="Logging level")
     
     args = parser.parse_args()
@@ -175,11 +198,17 @@ def main():
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     
-    # Get OpenAI API key
-    openai_api_key = args.openai_api_key or os.getenv("OPENAI_API_KEY")
-    if not openai_api_key:
-        logger.error("OpenAI API key required. Set --openai-api-key or OPENAI_API_KEY env var")
-        return
+    # Get API key based on provider
+    if args.llm_provider == "openai":
+        api_key = args.api_key or os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            logger.error("OpenAI API key required. Set --api-key or OPENAI_API_KEY env var")
+            return
+    elif args.llm_provider == "gemini":
+        api_key = args.api_key or os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            logger.error("Google Gemini API key required. Set --api-key or GOOGLE_API_KEY env var")
+            return
     
     # Run async function
     import asyncio
@@ -189,7 +218,8 @@ def main():
             args.uri,
             args.username,
             args.password,
-            openai_api_key,
+            api_key,
+            args.llm_provider,
         )
     )
 

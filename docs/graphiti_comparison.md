@@ -46,6 +46,8 @@ python scripts/load_cve_to_neo4j.py data/raw/cve_data.jsonl \
 - 동적 스키마
 
 ### 실행 방법
+
+#### OpenAI 사용
 ```bash
 # 1. Graphiti 설치
 pip install graphiti-core
@@ -57,7 +59,25 @@ export OPENAI_API_KEY=your-api-key
 python scripts/load_cve_with_graphiti.py data/raw/cve_data.jsonl \
   --uri neo4j+s://26e236b3.databases.neo4j.io \
   --username neo4j \
-  --password <password>
+  --password <password> \
+  --llm-provider openai
+```
+
+#### Google Gemini 사용 (무료 티어 가능!)
+```bash
+# 1. Graphiti 설치
+pip install graphiti-core
+
+# 2. Google Gemini API 키 설정
+# https://aistudio.google.com/app/apikey 에서 발급
+export GOOGLE_API_KEY=your-api-key
+
+# 3. CVE 데이터 로드
+python scripts/load_cve_with_graphiti.py data/raw/cve_data.jsonl \
+  --uri neo4j+s://26e236b3.databases.neo4j.io \
+  --username neo4j \
+  --password <password> \
+  --llm-provider gemini
 ```
 
 ### Graphiti가 추출할 수 있는 것들
