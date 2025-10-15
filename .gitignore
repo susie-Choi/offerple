@@ -3,3 +3,11 @@ __pycache__/
 .venv/
 data/
 .env
+
+# Kiro IDE - Include steering and specs, but exclude temporary files
+!.kiro/
+!.kiro/steering/
+!.kiro/specs/
+.kiro/cache/
+.kiro/logs/
+.kiro/.tmp/

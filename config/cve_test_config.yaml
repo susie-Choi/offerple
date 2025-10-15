@@ -1,0 +1,29 @@
+cutoff_date: "2024-12-31T23:59:59"
+output_dir: "data/raw"
+request_timeout: 30
+rate_limit_sleep: 6.0  # NVD requires 6 seconds between requests without API key
+
+# 테스트용 소규모 CVE 수집
+cve_targets:
+  # Log4Shell - 가장 유명한 취약점
+  - id: "CVE-2021-44228"
+    description: "Log4Shell - Apache Log4j2 RCE"
+  
+  - id: "CVE-2021-45046"
+    description: "Log4j2 DoS vulnerability"
+  
+  # Heartbleed - 역사적으로 중요한 취약점
+  - id: "CVE-2014-0160"
+    description: "OpenSSL Heartbleed"
+  
+  # Shellshock
+  - id: "CVE-2014-6271"
+    description: "Bash Shellshock"
+  
+  # Spring4Shell
+  - id: "CVE-2022-22965"
+    description: "Spring Framework RCE (Spring4Shell)"
+
+# NVD API 키 (선택사항)
+# 환경변수 NVD_API_KEY로도 설정 가능
+# nvd_api_key: "your-api-key-here"

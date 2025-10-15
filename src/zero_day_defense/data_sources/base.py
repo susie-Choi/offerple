@@ -34,14 +34,17 @@ class BaseDataSource:
         timeout: float = 15.0,
         rate_limit_sleep: float = 1.0,
         session: Optional[requests.Session] = None,
+        verify_ssl: bool = True,
     ) -> None:
         self.timeout = timeout
         self.rate_limit_sleep = rate_limit_sleep
         self.session = session or requests.Session()
+        self.verify_ssl = verify_ssl
 
     def _request(self, method: str, url: str, **kwargs: Any) -> requests.Response:
         """Perform an HTTP request with basic error handling."""
 
+        kwargs.setdefault('verify', self.verify_ssl)
         response = self.session.request(method, url, timeout=self.timeout, **kwargs)
         if response.status_code == 429:
             time.sleep(self.rate_limit_sleep)

@@ -1,0 +1,42 @@
+cutoff_date: "2021-12-31T23:59:59"
+output_dir: "data/raw"
+request_timeout: 30
+rate_limit_sleep: 6.0  # NVD requires 6 seconds between requests without API key
+
+# CVE 수집 대상
+# 형식:
+#   - CVE-YYYY-NNNNN: 특정 CVE ID
+#   - keyword:term: 키워드 검색
+#   - cpe:2.3:...: CPE 기반 검색
+cve_targets:
+  # Log4Shell 관련
+  - id: "CVE-2021-44228"
+    description: "Log4Shell - Apache Log4j2 RCE"
+  - id: "CVE-2021-45046"
+    description: "Log4j2 DoS vulnerability"
+  - id: "CVE-2021-45105"
+    description: "Log4j2 DoS via crafted input"
+  
+  # 키워드 검색 예시
+  - id: "keyword:log4j"
+    description: "All Log4j related CVEs"
+  - id: "keyword:apache"
+    description: "Apache software CVEs"
+  - id: "keyword:spring"
+    description: "Spring Framework CVEs"
+  
+  # 유명한 CVE들
+  - id: "CVE-2021-3156"
+    description: "Sudo heap overflow (Baron Samedit)"
+  - id: "CVE-2021-26855"
+    description: "Microsoft Exchange Server SSRF (ProxyLogon)"
+  - id: "CVE-2020-0601"
+    description: "Windows CryptoAPI spoofing (CurveBall)"
+  - id: "CVE-2017-5638"
+    description: "Apache Struts2 RCE (Equifax breach)"
+  - id: "CVE-2014-0160"
+    description: "OpenSSL Heartbleed"
+
+# NVD API 키 (선택사항, 없으면 rate limit이 더 엄격함)
+# 환경변수 NVD_API_KEY로도 설정 가능
+# nvd_api_key: "your-api-key-here"
