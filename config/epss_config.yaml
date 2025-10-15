@@ -1,0 +1,17 @@
+cutoff_date: "2024-12-31T23:59:59"
+output_dir: "data/raw"
+request_timeout: 15
+rate_limit_sleep: 0.5
+
+# EPSS 점수를 수집할 CVE 목록
+cve_list:
+  - CVE-2021-44228  # Log4Shell
+  - CVE-2021-45046  # Log4j DoS
+  - CVE-2021-45105  # Log4j DoS
+  - CVE-2014-0160   # Heartbleed
+  - CVE-2014-6271   # Shellshock
+  - CVE-2022-22965  # Spring4Shell
+  - CVE-2021-3156   # Sudo heap overflow
+  - CVE-2021-26855  # Exchange Server SSRF
+  - CVE-2020-0601   # Windows CryptoAPI
+  - CVE-2017-5638   # Struts2 RCE

@@ -110,22 +110,46 @@ async def load_cve_with_graphiti(
     logger.info(f"Initializing Graphiti with Neo4j at {neo4j_uri}")
     logger.info(f"Using LLM provider: {llm_provider}")
     
-    # Initialize Graphiti with appropriate API key
+    # Initialize Graphiti with appropriate LLM provider
     if llm_provider == "openai":
+        os.environ["OPENAI_API_KEY"] = api_key
         graphiti = Graphiti(
-            neo4j_uri=neo4j_uri,
-            neo4j_user=neo4j_user,
-            neo4j_password=neo4j_password,
-            openai_api_key=api_key,
+            uri=neo4j_uri,
+            user=neo4j_user,
+            password=neo4j_password,
         )
     elif llm_provider == "gemini":
-        # For Gemini, we need to set the environment variable
-        os.environ["GOOGLE_API_KEY"] = api_key
+        # For Gemini, we need to import and configure Gemini clients
+        try:
+            from graphiti_core.llm_client.gemini_client import GeminiClient, LLMConfig
+            from graphiti_core.embedder.gemini import GeminiEmbedder, GeminiEmbedderConfig
+            from graphiti_core.cross_encoder.gemini_reranker_client import GeminiRerankerClient
+        except ImportError:
+            logger.error("Gemini support not installed. Run: pip install 'graphiti-core[google-genai]'")
+            return
+        
         graphiti = Graphiti(
-            neo4j_uri=neo4j_uri,
-            neo4j_user=neo4j_user,
-            neo4j_password=neo4j_password,
-            llm_provider="google",  # Graphiti uses "google" for Gemini
+            uri=neo4j_uri,
+            user=neo4j_user,
+            password=neo4j_password,
+            llm_client=GeminiClient(
+                config=LLMConfig(
+                    api_key=api_key,
+                    model="gemini-2.0-flash"
+                )
+            ),
+            embedder=GeminiEmbedder(
+                config=GeminiEmbedderConfig(
+                    api_key=api_key,
+                    embedding_model="embedding-001"
+                )
+            ),
+            cross_encoder=GeminiRerankerClient(
+                config=LLMConfig(
+                    api_key=api_key,
+                    model="gemini-2.5-flash-lite-preview-06-17"
+                )
+            )
         )
     else:
         raise ValueError(f"Unsupported LLM provider: {llm_provider}")
@@ -153,11 +177,19 @@ async def load_cve_with_graphiti(
                     logger.info(f"Processing {cve_id}...")
                     
                     # Add episode to Graphiti (it will extract entities and relationships)
+                    from datetime import datetime
+                    published_str = cve_data.get("published", "")
+                    if published_str:
+                        reference_time = datetime.fromisoformat(published_str.replace("Z", "+00:00"))
+                    else:
+                        reference_time = datetime.utcnow()
+                    
                     await graphiti.add_episode(
                         name=cve_id,
                         episode_body=cve_text,
                         source_description=f"CVE vulnerability data from NVD",
-                        episode_type=EpisodeType.text,
+                        reference_time=reference_time,
+                        source=EpisodeType.text,
                     )
                     
                     count += 1

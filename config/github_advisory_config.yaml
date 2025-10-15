@@ -1,0 +1,30 @@
+cutoff_date: "2024-12-31T23:59:59"
+output_dir: "data/raw"
+request_timeout: 15
+rate_limit_sleep: 1.0
+
+# GitHub Advisory 수집 대상
+advisory_targets:
+  # 특정 CVE의 advisory 수집
+  - id: "CVE-2021-44228"
+    description: "Log4Shell advisories"
+  
+  - id: "CVE-2014-0160"
+    description: "Heartbleed advisories"
+  
+  - id: "CVE-2022-22965"
+    description: "Spring4Shell advisories"
+  
+  # 생태계별 advisory 수집
+  - id: "ecosystem:npm"
+    description: "npm ecosystem advisories"
+  
+  - id: "ecosystem:pip"
+    description: "Python/pip ecosystem advisories"
+  
+  - id: "ecosystem:maven"
+    description: "Maven ecosystem advisories"
+
+# GitHub token (선택사항, 없으면 rate limit이 더 엄격함)
+# 환경변수 GITHUB_TOKEN으로도 설정 가능
+# github_token: "your-github-token-here"
