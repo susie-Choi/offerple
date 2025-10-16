@@ -1,7 +1,7 @@
 """EPSS (Exploit Prediction Scoring System) data collector."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 from .base import BaseDataSource, SourceResult
@@ -33,7 +33,7 @@ class EPSSDataSource(BaseDataSource):
         return SourceResult(
             source=self.source_name,
             package=cve_id,
-            collected_at=datetime.utcnow(),
+            collected_at=datetime.now(timezone.utc),
             payload={
                 "cve_id": cve_id,
                 "epss_data": epss_data,
@@ -55,7 +55,7 @@ class EPSSDataSource(BaseDataSource):
         return SourceResult(
             source=self.source_name,
             package=f"batch:{len(cve_ids)}",
-            collected_at=datetime.utcnow(),
+            collected_at=datetime.now(timezone.utc),
             payload={
                 "cve_ids": cve_ids,
                 "epss_data": epss_data,

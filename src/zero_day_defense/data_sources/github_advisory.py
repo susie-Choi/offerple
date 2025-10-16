@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from .base import BaseDataSource, SourceResult
@@ -61,7 +61,7 @@ class GitHubAdvisoryDataSource(BaseDataSource):
         return SourceResult(
             source=self.source_name,
             package=cve_id,
-            collected_at=datetime.utcnow(),
+            collected_at=datetime.now(timezone.utc),
             payload={
                 "cve_id": cve_id,
                 "advisories": filtered_advisories,
@@ -105,7 +105,7 @@ class GitHubAdvisoryDataSource(BaseDataSource):
         return SourceResult(
             source=self.source_name,
             package=f"ecosystem:{ecosystem}",
-            collected_at=datetime.utcnow(),
+            collected_at=datetime.now(timezone.utc),
             payload={
                 "ecosystem": ecosystem,
                 "advisories": filtered_advisories,

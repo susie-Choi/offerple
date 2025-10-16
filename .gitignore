@@ -10,3 +10,16 @@ __pycache__/
 .kiro/cache/
 .kiro/logs/
 .kiro/.tmp/
+
+# Data files
+data/
+results/
+*.jsonl
+*.json
+
+# Old version (archived)
+graph/
+
+# Test files
+test_*.py
+*_test.py

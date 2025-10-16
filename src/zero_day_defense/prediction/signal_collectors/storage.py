@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Union
 
@@ -59,7 +59,7 @@ class TimeSeriesStore:
         output_dir.mkdir(parents=True, exist_ok=True)
         
         # Create filename: package_signaltype_timestamp.jsonl
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         safe_package = package.replace("/", "_").replace(":", "_")
         filename = f"{safe_package}_{signal_type}_{timestamp}.jsonl"
         output_path = output_dir / filename

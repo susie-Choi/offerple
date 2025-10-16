@@ -1,7 +1,7 @@
-"""Prediction scoring engine."""
+ """Prediction scoring engine."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Tuple
 
 import numpy as np
@@ -86,7 +86,7 @@ class PredictionScorer:
             nearest_clusters=[(cluster_id, distance)],
             similar_cves=similar_cves,
             risk_level=risk_level,
-            predicted_at=datetime.utcnow(),
+            predicted_at=datetime.now(timezone.utc),
             metadata={
                 "cluster_size": cluster_metadata.size,
                 "cluster_avg_cvss": cluster_metadata.avg_cvss,

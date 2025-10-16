@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from .base import BaseDataSource, DataSourceError, SourceResult
@@ -30,9 +30,27 @@ class CVEDataSource(BaseDataSource):
         if api_key:
             self.session.headers.update({"apiKey": api_key})
             self.rate_limit_sleep = 0.6  # With API key, 50 requests per 30 seconds
+    
+    def _parse_published_date(self, published_str: str) -> datetime:
+        """Parse published date string and ensure timezone-aware."""
+        # Replace 'Z' with '+00:00' for ISO format
+        pub_date_str = published_str.replace("Z", "+00:00")
+        pub_date = datetime.fromisoformat(pub_date_str)
+        # Ensure timezone-aware
+        if pub_date.tzinfo is None:
+            pub_date = pub_date.replace(tzinfo=timezone.utc)
+        return pub_date
+    
+    def _ensure_cutoff_aware(self, cutoff: datetime) -> datetime:
+        """Ensure cutoff datetime is timezone-aware."""
+        if cutoff.tzinfo is None:
+            return cutoff.replace(tzinfo=timezone.utc)
+        return cutoff
 
     def collect_by_cve_id(self, cve_id: str, *, cutoff: datetime) -> SourceResult:
         """Collect data for a specific CVE ID (e.g., CVE-2021-44228)."""
+        cutoff = self._ensure_cutoff_aware(cutoff)
+        
         params = {"cveId": cve_id}
         response = self._request("GET", self.BASE_URL, params=params)
         time.sleep(self.rate_limit_sleep)
@@ -49,14 +67,14 @@ class CVEDataSource(BaseDataSource):
             cve_data = vuln.get("cve", {})
             published = cve_data.get("published")
             if published:
-                pub_date = datetime.fromisoformat(published.replace("Z", "+00:00"))
+                pub_date = self._parse_published_date(published)
                 if pub_date <= cutoff:
                     filtered_vulns.append(vuln)
         
         return SourceResult(
             source=self.source_name,
             package=cve_id,
-            collected_at=datetime.utcnow(),
+            collected_at=datetime.now(timezone.utc),
             payload={
                 "vulnerabilities": filtered_vulns,
                 "total_results": len(filtered_vulns),
@@ -71,6 +89,8 @@ class CVEDataSource(BaseDataSource):
         max_results: int = 100,
     ) -> SourceResult:
         """Collect CVEs matching a keyword search (e.g., 'log4j', 'apache')."""
+        cutoff = self._ensure_cutoff_aware(cutoff)
+        
         params = {
             "keywordSearch": keyword,
             "resultsPerPage": min(max_results, 2000),  # NVD max is 2000
@@ -88,14 +108,14 @@ class CVEDataSource(BaseDataSource):
             cve_data = vuln.get("cve", {})
             published = cve_data.get("published")
             if published:
-                pub_date = datetime.fromisoformat(published.replace("Z", "+00:00"))
+                pub_date = self._parse_published_date(published)
                 if pub_date <= cutoff:
                     filtered_vulns.append(vuln)
         
         return SourceResult(
             source=self.source_name,
             package=f"keyword:{keyword}",
-            collected_at=datetime.utcnow(),
+            collected_at=datetime.now(timezone.utc),
             payload={
                 "keyword": keyword,
                 "vulnerabilities": filtered_vulns,
@@ -114,6 +134,8 @@ class CVEDataSource(BaseDataSource):
         
         Example CPE: cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*
         """
+        cutoff = self._ensure_cutoff_aware(cutoff)
+        
         params = {
             "cpeName": cpe_name,
             "resultsPerPage": min(max_results, 2000),
@@ -131,14 +153,14 @@ class CVEDataSource(BaseDataSource):
             cve_data = vuln.get("cve", {})
             published = cve_data.get("published")
             if published:
-                pub_date = datetime.fromisoformat(published.replace("Z", "+00:00"))
+                pub_date = self._parse_published_date(published)
                 if pub_date <= cutoff:
                     filtered_vulns.append(vuln)
         
         return SourceResult(
             source=self.source_name,
             package=f"cpe:{cpe_name}",
-            collected_at=datetime.utcnow(),
+            collected_at=datetime.now(timezone.utc),
             payload={
                 "cpe": cpe_name,
                 "vulnerabilities": filtered_vulns,

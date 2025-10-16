@@ -1,7 +1,7 @@
 """Maven Central metadata collector."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Tuple
 
 from .base import BaseDataSource, SourceResult
@@ -39,7 +39,7 @@ class MavenCentralDataSource(BaseDataSource):
         return SourceResult(
             source=self.source_name,
             package=package,
-            collected_at=datetime.utcnow(),
+            collected_at=datetime.now(timezone.utc),
             payload=payload,
         )
 

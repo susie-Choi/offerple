@@ -60,7 +60,7 @@ class GitHubDataSource(BaseDataSource):
         return SourceResult(
             source=self.source_name,
             package=f"{owner}/{repo}",
-            collected_at=datetime.utcnow(),
+            collected_at=datetime.now(timezone.utc),
             payload=data,
         )
 
