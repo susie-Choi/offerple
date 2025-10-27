@@ -1,3 +1,54 @@
+Metadata-Version: 2.4
+Name: rota
+Version: 0.1.0
+Summary: Real-time Operational Threat Assessment - AI-powered zero-day vulnerability prediction system
+Author-email: Susie Choi <susie.choi@example.com>
+Maintainer-email: Susie Choi <susie.choi@example.com>
+License: MIT
+Project-URL: Homepage, https://github.com/susie-Choi/rota
+Project-URL: Repository, https://github.com/susie-Choi/rota
+Project-URL: Documentation, https://github.com/susie-Choi/rota#readme
+Project-URL: Bug Tracker, https://github.com/susie-Choi/rota/issues
+Project-URL: Changelog, https://github.com/susie-Choi/rota/releases
+Keywords: security,vulnerability,zero-day,prediction,ai,machine-learning,cybersecurity,threat-assessment
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Information Technology
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Security
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: requests>=2.31.0
+Requires-Dist: tqdm>=4.66.0
+Requires-Dist: matplotlib>=3.7.0
+Requires-Dist: seaborn>=0.12.0
+Requires-Dist: scipy>=1.10.0
+Requires-Dist: statsmodels>=0.14.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0; extra == "dev"
+Requires-Dist: black>=23.0; extra == "dev"
+Requires-Dist: flake8>=6.0; extra == "dev"
+Requires-Dist: mypy>=1.0; extra == "dev"
+Provides-Extra: neo4j
+Requires-Dist: neo4j>=5.0; extra == "neo4j"
+Requires-Dist: py2neo>=2021.2; extra == "neo4j"
+Provides-Extra: dashboard
+Requires-Dist: streamlit>=1.28.0; extra == "dashboard"
+Requires-Dist: plotly>=5.17.0; extra == "dashboard"
+Requires-Dist: pandas>=2.0.0; extra == "dashboard"
+Dynamic: license-file
+
 # ROTA - Real-time Operational Threat Assessment
 
 [![PyPI version](https://badge.fury.io/py/rota.svg)](https://badge.fury.io/py/rota)

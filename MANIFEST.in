@@ -1,0 +1,17 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+include requirements.txt
+recursive-include src/zero_day_defense *.py
+recursive-include src/zero_day_defense *.typed
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude * .DS_Store
+recursive-exclude * .git*
+exclude .gitignore
+exclude .kiro/
+exclude results/
+exclude data/
+exclude cache/
+exclude graph/
+exclude *.log
