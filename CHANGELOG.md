@@ -5,6 +5,26 @@ All notable changes to ROTA will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2025-10-27
+
+### Changed
+- Cleaned up and reorganized all documentation
+- Standardized file naming to lowercase-with-dashes convention
+- Removed outdated Korean documentation and duplicate guides
+- Updated graphiti-comparison.md to reflect current ROTA architecture
+- Consolidated release guides into comprehensive release-guide.md
+
+### Added
+- Automated release creation workflow
+- Release creation scripts (PowerShell and Bash)
+- Comprehensive release management guide
+
+### Removed
+- Outdated implementation summaries and refactoring plans
+- Duplicate publish/release guides
+- Korean paper experiment documentation
+- Empty guide files
+
 ## [0.1.3] - 2025-10-27
 
 ### Changed
