@@ -1,189 +1,113 @@
-# Graphiti vs 수동 스키마 비교
+# Graphiti vs Manual Schema Comparison
 
-이 문서는 CVE 데이터를 Neo4j에 로드하는 두 가지 방법을 비교합니다.
+This document compares two approaches for loading CVE data into Neo4j.
 
-## 방법 1: 수동 스키마 설계 (기존)
+## Approach 1: Manual Schema Design (Current)
 
-### 특징
-- 명시적으로 노드 타입과 관계를 정의
-- 구조화된 데이터에 최적화
-- 성능 예측 가능
-- 스키마 제어 가능
+### Features
+- Explicitly define node types and relationships
+- Optimized for structured data
+- Predictable performance
+- Full schema control
 
-### 노드 타입
-- `CVE`: 취약점
-- `CPE`: 제품 버전
-- `CWE`: 약점 유형
-- `Vendor`: 벤더
-- `Product`: 제품
-- `Reference`: 참조 링크
+### Node Types
+- `CVE`: Vulnerabilities
+- `CPE`: Product versions
+- `CWE`: Weakness types
+- `Vendor`: Vendors
+- `Product`: Products
+- `Reference`: Reference links
 
-### 실행 방법
+### Usage
 ```bash
-python scripts/load_cve_to_neo4j.py data/raw/cve_data.jsonl \
+python scripts/loading/load_cve_to_neo4j.py data/raw/cve_data.jsonl \
   --uri neo4j+s://26e236b3.databases.neo4j.io \
   --username neo4j \
   --password <password>
 ```
 
-### 장점
-- 빠른 로딩 속도
-- 정확한 스키마
-- 쿼리 최적화 용이
-- 비용 효율적 (LLM API 불필요)
+### Advantages
+- Fast loading speed
+- Efficient queries
+- Clear schema
+- Easy to optimize
 
-### 단점
-- 스키마 변경 시 코드 수정 필요
-- 암묵적 관계 발견 어려움
-- 비정형 데이터 처리 제한적
+### Disadvantages
+- Manual schema maintenance
+- Rigid structure
+- Requires schema updates for new data
 
-## 방법 2: Graphiti 자동 추출
+## Approach 2: Graphiti (Experimental)
 
-### 특징
-- LLM이 자동으로 엔티티와 관계 추출
-- 비정형 텍스트에 최적화
-- 의미론적 관계 발견
-- 동적 스키마
+### Features
+- Automatic schema generation
+- LLM-powered entity extraction
+- Flexible for unstructured data
+- Temporal graph support
 
-### 실행 방법
-
-#### 1. 환경 설정
+### Usage
 ```bash
-# .env 파일 생성 (또는 .env.example을 복사)
-cp .env.example .env
-
-# .env 파일 편집하여 설정값 입력
-# NEO4J_URI=neo4j+s://xxxxx.databases.neo4j.io
-# NEO4J_USERNAME=neo4j
-# NEO4J_PASSWORD=your-password
-# GOOGLE_API_KEY=your-gemini-api-key  (또는 OPENAI_API_KEY)
+python scripts/loading/load_cve_with_graphiti.py data/raw/cve_data.jsonl
 ```
 
-#### 2. Graphiti 설치
-```bash
-pip install graphiti-core
+### Advantages
+- No manual schema design
+- Handles unstructured text
+- Automatic entity extraction
+- Temporal relationships
+
+### Disadvantages
+- Slower (LLM calls)
+- Less predictable
+- Higher cost (API calls)
+- Complex debugging
+
+## Performance Comparison
+
+| Metric | Manual Schema | Graphiti |
+|--------|---------------|----------|
+| Loading Speed | Fast (~1000 CVEs/min) | Slow (~10 CVEs/min) |
+| Query Performance | Excellent | Good |
+| Schema Flexibility | Low | High |
+| Cost | Free | API costs |
+| Maintenance | Manual | Automatic |
+
+## Recommendation
+
+**Use Manual Schema for:**
+- Structured CVE data
+- Production systems
+- Performance-critical applications
+- Cost-sensitive projects
+
+**Use Graphiti for:**
+- Unstructured text analysis
+- Exploratory research
+- Rapid prototyping
+- Complex entity relationships
+
+## Hybrid Approach
+
+Best of both worlds:
+1. Use manual schema for core CVE data
+2. Use Graphiti for unstructured descriptions and references
+3. Link both graphs with common CVE IDs
+
+```python
+# Load structured data with manual schema
+load_cve_structured(cve_data)
+
+# Enhance with Graphiti for text analysis
+graphiti.add_episode(
+    name=f"CVE-{cve_id}",
+    episode_body=cve_description,
+    source_description="CVE Description"
+)
 ```
 
-#### 3. CVE 데이터 로드
+## Conclusion
 
-**OpenAI 사용:**
-```bash
-python scripts/load_cve_with_graphiti.py data/raw/cve_data.jsonl --llm-provider openai
-```
-
-**Google Gemini 사용 (무료 티어 가능!):**
-```bash
-# https://aistudio.google.com/app/apikey 에서 API 키 발급
-python scripts/load_cve_with_graphiti.py data/raw/cve_data.jsonl --llm-provider gemini
-```
-
-모든 설정은 `.env` 파일에서 자동으로 로드됩니다.
-
-### Graphiti가 추출할 수 있는 것들
-- **명시적 엔티티**: CVE ID, 제품명, 벤더명, CWE ID
-- **암묵적 관계**: "Log4j vulnerability affects Apache products"
-- **의미론적 연결**: 유사한 취약점 간 관계
-- **시간적 관계**: 취약점 발견 → 패치 → 재발견
-
-### 장점
-- 자동 스키마 생성
-- 의미론적 검색 가능
-- 암묵적 관계 발견
-- 비정형 데이터 처리 우수
-
-### 단점
-- 느린 처리 속도 (LLM 호출)
-- OpenAI API 비용 발생
-- 스키마 예측 어려움
-- 정확도가 LLM 성능에 의존
-
-## 비교 표
-
-| 항목 | 수동 스키마 | Graphiti |
-|------|------------|----------|
-| 처리 속도 | 빠름 (초당 10+ CVE) | 느림 (초당 1-2 CVE) |
-| 비용 | 무료 | OpenAI API 비용 |
-| 정확도 | 매우 높음 | LLM 의존 |
-| 유연성 | 낮음 | 높음 |
-| 의미론적 검색 | 제한적 | 우수 |
-| 비정형 데이터 | 어려움 | 우수 |
-| 스키마 제어 | 완전 제어 | 제한적 |
-
-## 추천 사용 시나리오
-
-### 수동 스키마를 사용하세요
-- ✅ 구조화된 데이터 (JSON, XML 등)
-- ✅ 명확한 스키마가 있는 경우
-- ✅ 대량 데이터 처리
-- ✅ 비용 최소화
-- ✅ 성능 중요
-
-### Graphiti를 사용하세요
-- ✅ 비정형 텍스트 문서
-- ✅ 스키마가 불명확한 경우
-- ✅ 의미론적 관계 발견 필요
-- ✅ 탐색적 분석
-- ✅ 문서 간 유사도 비교
-
-## 하이브리드 접근
-
-두 방법을 결합할 수도 있습니다:
-
-1. **수동 스키마로 핵심 구조 구축**
-   - CVE, CPE, CWE 등 명확한 엔티티
-
-2. **Graphiti로 보조 관계 추출**
-   - 취약점 설명에서 암묵적 관계 발견
-   - 유사 취약점 클러스터링
-
-3. **Vector DB 병행**
-   - 의미론적 검색은 Pinecone/Weaviate
-   - 구조적 쿼리는 Neo4j
-
-## 실험 결과 비교
-
-두 방법으로 동일한 CVE 데이터를 로드한 후:
-
-### 수동 스키마 결과
-```cypher
-// 노드 수 확인
-MATCH (n) RETURN labels(n) as type, count(n) as count
-
-// 예상 결과:
-// CVE: 5
-// CPE: ~50
-// CWE: ~10
-// Vendor: ~5
-// Product: ~10
-// Reference: ~20
-```
-
-### Graphiti 결과
-```cypher
-// Graphiti가 생성한 노드 확인
-MATCH (n) RETURN labels(n) as type, count(n) as count
-
-// Graphiti는 다양한 엔티티 타입을 자동 생성
-// 예: Vulnerability, Software, Organization, Weakness 등
-```
-
-## 다음 단계
-
-1. **두 방법 모두 실행해보기**
-2. **Neo4j Browser에서 그래프 비교**
-3. **쿼리 성능 비교**
-4. **실제 유스케이스에 맞는 방법 선택**
-
-## 요구사항 추적 시스템에는?
-
-**문서 변경 추적 및 영향도 분석** 시스템에는 **Graphiti가 더 적합**합니다:
-
-- 요구사항 문서는 비정형 텍스트
-- 의미론적 유사도 비교 필요
-- 암묵적 의존성 발견 중요
-- 스키마가 프로젝트마다 다름
-
-하지만 **핵심 추적 관계는 수동으로 정의**하는 것이 좋습니다:
-- `Requirement -[:VERSION_OF]-> Requirement`
-- `Requirement -[:IMPLEMENTS]-> SWSpec`
-- `SWSpec -[:TESTED_BY]-> TestCase`
+For ROTA project:
+- **Primary**: Manual schema (performance, cost)
+- **Secondary**: Graphiti for text analysis (research value)
+- **Future**: Hybrid approach for best results

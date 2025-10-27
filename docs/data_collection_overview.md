@@ -1,32 +1,93 @@
-# 데이터 수집 파이프라인 개요
+# Data Collection Pipeline Overview
 
-이 문서는 Zero-Day Defense 연구를 위한 데이터 수집 파이프라인의 범위와 설계 원칙을 정리합니다.
+This document outlines the scope and design principles of the data collection pipeline for ROTA research.
 
-## 목표
+## Objectives
 
-- 연구 계획서의 Phase 1, Phase 2를 지원할 수 있도록 다양한 생태계 데이터 확보
-- 시간적 누수를 방지하기 위한 `cutoff_date` 기반 필터링 적용
-- 패키지 메타데이터, 릴리스 이력, 저장소 활동을 통합 저장
+- Secure diverse ecosystem data to support Phase 1 and Phase 2 of the research plan
+- Apply `cutoff_date`-based filtering to prevent temporal data leakage
+- Integrate package metadata, release history, and repository activity
 
-## 현재 지원 소스
+## Currently Supported Sources
 
-| 소스 | API | 수집 항목 |
-| ---- | --- | --------- |
-| PyPI | `https://pypi.org/pypi/{package}/json` | 패키지 정보, 릴리스 이력 |
-| Maven Central | `https://search.maven.org/solrsearch/select` | 아티팩트 메타데이터, 릴리스 이력 |
-| npm Registry | `https://registry.npmjs.org/{package}` | 패키지 정보, 버전별 타임스탬프 |
-| GitHub | `https://api.github.com` | 저장소 메타데이터, 커밋, 이슈, PR |
+| Source | API | Collected Items |
+| ------ | --- | --------------- |
+| PyPI | `https://pypi.org/pypi/{package}/json` | Package info, release history |
+| Maven Central | `https://search.maven.org/solrsearch/select` | Artifact metadata, release history |
+| npm Registry | `https://registry.npmjs.org/{package}` | Package info, version timestamps |
+| GitHub | `https://api.github.com` | Repository metadata, commits, issues, PRs |
 
-## 데이터 저장 형식
+## Data Storage Format
 
-- 패키지별 JSON Lines 파일 (`data/raw/<package>.jsonl`)
-- 각 레코드는 `source`, `package`, `collected_at`, `payload` 필드 포함
+All collected data is stored in JSON Lines (.jsonl) format with the following structure:
 
-## 향후 확장
+```json
+{
+  "source": "pypi",
+  "package": "django",
+  "collected_at": "2024-10-27T12:00:00Z",
+  "payload": {
+    "info": {...},
+    "releases": {...}
+  }
+}
+```
 
-1. 의존성 그래프 수집 (Libraries.io, deps.dev)
-2. 다운로드 통계 및 커뮤니티 신호 추가 수집
-3. 비동기 수집 및 재시도 로직 강화
-4. 데이터 검증 및 품질 모듈 도입
+## Temporal Correctness
 
-해당 파이프라인을 기반으로 추후 특징 추출, LLM 추론, Historical Validation 단계가 구축될 예정입니다.
+To prevent data leakage in historical validation:
+
+- All timestamps are stored in UTC
+- `cutoff_date` parameter filters data to simulate historical knowledge
+- Future data (after cutoff) is excluded from analysis
+
+## Configuration
+
+Data collection is configured via YAML files:
+
+```yaml
+sources:
+  - type: pypi
+    packages:
+      - django
+      - flask
+    cutoff_date: "2024-01-01"
+  
+  - type: github
+    repositories:
+      - django/django
+      - pallets/flask
+    cutoff_date: "2024-01-01"
+```
+
+## Output Directory Structure
+
+```
+data/
+├── raw/
+│   ├── pypi/
+│   │   ├── django.jsonl
+│   │   └── flask.jsonl
+│   ├── npm/
+│   ├── maven/
+│   └── github/
+└── processed/
+    └── features/
+```
+
+## Usage
+
+```bash
+# Collect PyPI data
+python scripts/collection/collect_data.py config/pypi_config.yaml
+
+# Collect GitHub data
+python scripts/collection/collect_github_data.py config/github_config.yaml
+```
+
+## Next Steps
+
+1. Add more data sources (CVE, EPSS, Exploit-DB)
+2. Implement data validation and quality checks
+3. Add incremental collection support
+4. Optimize API rate limiting

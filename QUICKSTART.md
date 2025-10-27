@@ -1,33 +1,33 @@
-# Zero-Day Defense 예측 시스템 - 빠른 시작 가이드
+# ROTA Prediction System - Quick Start Guide
 
-## 🚀 5분 안에 시작하기
+## 🚀 Get Started in 5 Minutes
 
-### 1단계: 환경 설정
+### Step 1: Environment Setup
 
 ```bash
-# 1. 의존성 설치
+# 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. 환경 변수 설정
-# .env 파일 생성
+# 2. Set environment variables
+# Create .env file
 cat > .env << EOF
 GITHUB_TOKEN=your_github_personal_access_token
 GEMINI_API_KEY=your_gemini_api_key
 EOF
 ```
 
-**API 키 발급 방법:**
-- **GitHub Token**: https://github.com/settings/tokens (repo 권한 필요)
+**API Key Setup:**
+- **GitHub Token**: https://github.com/settings/tokens (requires repo permission)
 - **Gemini API Key**: https://makersuite.google.com/app/apikey
 
-### 2단계: 첫 번째 분석 실행
+### Step 2: Run Your First Analysis
 
 ```bash
-# 간단한 데모 실행 (Apache Log4j 예시)
+# Run simple demo (Apache Log4j example)
 python scripts/run_prediction_demo.py --repo apache/log4j --days 30
 ```
 
-**출력 예시:**
+**Expected Output:**
 ```
 ================================================================================
 Zero-Day Defense Prediction System - Demo
@@ -91,7 +91,7 @@ Issue Activity:
 ✅ Demo completed successfully!
 ```
 
-### 3단계: Python API로 직접 사용
+### Step 3: Use Python API Directly
 
 ```python
 from datetime import datetime, timedelta
@@ -102,25 +102,25 @@ from zero_day_defense.prediction.feature_engineering import (
     FeatureVectorBuilder,
 )
 
-# 1. 신호 수집
+# 1. Collect signals
 collector = GitHubSignalCollector()
 until = datetime.utcnow()
 since = until - timedelta(days=30)
 
 commits = collector.collect_commit_history("owner/repo", since, until)
-print(f"수집된 커밋: {len(commits)}개")
+print(f"Collected commits: {len(commits)}")
 
-# 2. 특징 추출
+# 2. Extract features
 extractor = FeatureExtractor()
 features = extractor.extract_commit_features(commits)
-print(f"추출된 특징: {len(features)}개")
+print(f"Extracted features: {len(features)}")
 
-# 3. 임베딩 생성 (Gemini API)
+# 3. Generate embeddings (Gemini API)
 embedder = LLMEmbedder()
 embeddings = embedder.embed_commit_messages(commits)
-print(f"임베딩 차원: {len(embeddings)}")
+print(f"Embedding dimension: {len(embeddings)}")
 
-# 4. 특징 벡터 생성
+# 4. Build feature vector
 builder = FeatureVectorBuilder()
 vector = builder.build_vector(
     package="owner/repo",
@@ -128,22 +128,22 @@ vector = builder.build_vector(
     structural_features=features,
     semantic_embeddings=embeddings,
 )
-print(f"최종 벡터 차원: {len(vector.combined)}")
+print(f"Final vector dimension: {len(vector.combined)}")
 ```
 
-## 📋 주요 사용 시나리오
+## 📋 Common Use Cases
 
-### 시나리오 1: 특정 패키지 분석
+### Use Case 1: Analyze Specific Package
 
 ```bash
-# 최근 90일 동안의 활동 분석
+# Analyze last 90 days of activity
 python scripts/run_prediction_demo.py --repo tensorflow/tensorflow --days 90
 
-# 최근 7일 동안의 활동 분석 (빠른 체크)
+# Quick check for last 7 days
 python scripts/run_prediction_demo.py --repo fastapi/fastapi --days 7
 ```
 
-### 시나리오 2: 여러 패키지 비교
+### Use Case 2: Compare Multiple Packages
 
 ```python
 from zero_day_defense.prediction.signal_collectors import GitHubSignalCollector
@@ -162,12 +162,12 @@ for repo in repos:
     features = extractor.extract_commit_features(commits)
     
     print(f"\n{repo}:")
-    print(f"  커밋 빈도: {features['commit_frequency']:.2f} commits/day")
-    print(f"  작성자 수: {int(features['author_diversity'])}")
-    print(f"  보안 파일 비율: {features.get('file_type_test', 0):.1%}")
+    print(f"  Commit frequency: {features['commit_frequency']:.2f} commits/day")
+    print(f"  Authors: {int(features['author_diversity'])}")
+    print(f"  Security file ratio: {features.get('file_type_test', 0):.1%}")
 ```
 
-### 시나리오 3: LLM Agent로 상세 분석
+### Use Case 3: Detailed Analysis with LLM Agents
 
 ```python
 from zero_day_defense.prediction.agents import (
@@ -176,15 +176,15 @@ from zero_day_defense.prediction.agents import (
     RecommendationAgent,
 )
 
-# 신호 분석
+# Signal analysis
 analyzer = SignalAnalyzerAgent()
 analysis = analyzer.analyze_commits(commits, {"package": "owner/repo"})
 
-print("보안 우려사항:")
+print("Security concerns:")
 for concern in analysis.get('security_concerns', []):
     print(f"  - {concern}")
 
-# 위협 시나리오 생성 (가상의 threat_score 사용)
+# Generate threat scenario
 from zero_day_defense.prediction.models import ThreatScore
 
 threat_score = ThreatScore(
@@ -204,47 +204,47 @@ scenario = assessor.generate_threat_scenario(
     ["CVE-2021-44228", "CVE-2021-45046"],
 )
 
-print("\n공격 벡터:")
+print("\nAttack vectors:")
 for vector in scenario.attack_vectors:
     print(f"  - {vector}")
 
-# 대응 방안
+# Recommendations
 recommender = RecommendationAgent()
 recommendations = recommender.generate_recommendations(
     scenario,
     {"package": "owner/repo", "risk_level": "HIGH"},
 )
 
-print("\n즉각 조치:")
+print("\nImmediate actions:")
 for action in recommendations.immediate_actions:
     print(f"  - {action}")
 ```
 
-## 🔧 고급 사용법
+## 🔧 Advanced Usage
 
-### CVE 클러스터링 (과거 CVE 데이터 필요)
+### CVE Clustering (Requires Historical CVE Data)
 
 ```python
 from zero_day_defense.prediction.engine import CVEClusterer
 
-# 1. 과거 CVE 데이터로 클러스터 학습
-# (실제로는 Neo4j에서 CVE 데이터를 로드해야 함)
-historical_cve_vectors = []  # FeatureVector 리스트
+# 1. Train clusters with historical CVE data
+# (In practice, load CVE data from Neo4j)
+historical_cve_vectors = []  # List of FeatureVector
 
 clusterer = CVEClusterer(n_clusters=10, algorithm="kmeans")
 clusterer.fit(historical_cve_vectors)
 
-# 2. 새로운 패키지 분류
+# 2. Classify new package
 cluster_id, distance = clusterer.predict_cluster(vector)
-print(f"클러스터: {cluster_id}, 거리: {distance:.3f}")
+print(f"Cluster: {cluster_id}, Distance: {distance:.3f}")
 
-# 3. 클러스터 정보 확인
+# 3. Check cluster information
 metadata = clusterer.get_cluster_metadata(cluster_id)
-print(f"클러스터 크기: {metadata.size}")
-print(f"평균 CVSS: {metadata.avg_cvss:.1f}")
+print(f"Cluster size: {metadata.size}")
+print(f"Average CVSS: {metadata.avg_cvss:.1f}")
 ```
 
-### 위협 점수 계산
+### Threat Score Calculation
 
 ```python
 from zero_day_defense.prediction.engine import PredictionScorer
@@ -252,21 +252,21 @@ from zero_day_defense.prediction.engine import PredictionScorer
 scorer = PredictionScorer(clusterer, threshold=0.7)
 threat_score = scorer.score_package(vector)
 
-print(f"위협 점수: {threat_score.score:.2f}")
-print(f"위험 수준: {threat_score.risk_level}")
-print(f"신뢰도: {threat_score.confidence:.2f}")
+print(f"Threat score: {threat_score.score:.2f}")
+print(f"Risk level: {threat_score.risk_level}")
+print(f"Confidence: {threat_score.confidence:.2f}")
 
-print("\n유사한 CVE:")
+print("\nSimilar CVEs:")
 for cve_id, similarity in threat_score.similar_cves:
     print(f"  {cve_id}: {similarity:.3f}")
 ```
 
-## 🐛 문제 해결
+## 🐛 Troubleshooting
 
 ### GitHub API Rate Limit
 
 ```python
-# 현재 rate limit 확인
+# Check current rate limit
 import requests
 response = requests.get(
     "https://api.github.com/rate_limit",
@@ -275,15 +275,15 @@ response = requests.get(
 print(response.json())
 ```
 
-**해결책:**
-- GITHUB_TOKEN 환경 변수 설정 (5,000 requests/hour)
-- 요청 간 딜레이 추가
-- 캐싱 사용
+**Solutions:**
+- Set GITHUB_TOKEN environment variable (5,000 requests/hour)
+- Add delay between requests
+- Use caching
 
-### Gemini API 오류
+### Gemini API Errors
 
 ```python
-# API 키 테스트
+# Test API key
 import google.generativeai as genai
 import os
 
@@ -293,40 +293,40 @@ response = model.generate_content("Hello")
 print(response.text)
 ```
 
-**해결책:**
-- GEMINI_API_KEY 또는 GOOGLE_API_KEY 환경 변수 확인
-- API 할당량 확인 (Free tier: 15 RPM)
-- 요청 간 딜레이 추가
+**Solutions:**
+- Check GEMINI_API_KEY or GOOGLE_API_KEY environment variable
+- Check API quota (Free tier: 15 RPM)
+- Add delay between requests
 
-### 메모리 부족
+### Out of Memory
 
 ```python
-# 배치 처리로 메모리 절약
+# Use batch processing to save memory
 repos = ["repo1", "repo2", "repo3", ...]
 
 for repo in repos:
-    # 각 repo를 개별적으로 처리
+    # Process each repo individually
     commits = collector.collect_commit_history(repo, since, until)
-    # ... 처리 ...
-    del commits  # 메모리 해제
+    # ... process ...
+    del commits  # Free memory
 ```
 
-## 📚 다음 단계
+## 📚 Next Steps
 
-1. **실제 CVE 데이터 수집**: `scripts/collect_cve_data.py` 실행
-2. **Neo4j 통합**: CVE 데이터를 Neo4j에 로드
-3. **클러스터 학습**: 과거 CVE로 클러스터 모델 학습
-4. **자동화**: 정기적인 분석을 위한 스케줄러 설정
+1. **Collect Real CVE Data**: Run `scripts/collect_cve_data.py`
+2. **Neo4j Integration**: Load CVE data into Neo4j
+3. **Train Clusters**: Train cluster model with historical CVEs
+4. **Automation**: Set up scheduler for regular analysis
 
-## 💡 팁
+## 💡 Tips
 
-- **작은 프로젝트부터 시작**: 큰 프로젝트는 API 호출이 많아 시간이 오래 걸립니다
-- **캐싱 활용**: 같은 데이터를 반복 분석할 때는 저장된 신호 사용
-- **배치 처리**: 여러 패키지를 분석할 때는 배치로 처리
-- **로그 확인**: 문제 발생 시 상세 로그 확인
+- **Start with Small Projects**: Large projects require many API calls and take longer
+- **Use Caching**: Reuse saved signals when analyzing same data repeatedly
+- **Batch Processing**: Process multiple packages in batches
+- **Check Logs**: Review detailed logs when issues occur
 
-## 🆘 도움말
+## 🆘 Help
 
-- 상세 가이드: `docs/prediction_system_guide.md`
-- 구현 요약: `docs/IMPLEMENTATION_SUMMARY.md`
-- 이슈 리포트: GitHub Issues
+- Detailed Guide: `docs/guides/prediction_system_guide.md`
+- Implementation Summary: `docs/IMPLEMENTATION_SUMMARY.md`
+- Report Issues: GitHub Issues

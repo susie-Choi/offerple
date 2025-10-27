@@ -5,15 +5,15 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "rota"
 version = "0.1.3"
-description = "Real-time Operational Threat Assessment - AI-powered zero-day vulnerability prediction system"
+description = "Real-time Offensive Threat Assessment - Zero-day vulnerability prediction using behavioral signals"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
-    {name = "Susie Choi", email = "susie.choi@example.com"}
+    {name = "Susie Choi", email = "sschoidev@gmail.com"}
 ]
 maintainers = [
-    {name = "Susie Choi", email = "susie.choi@example.com"}
+    {name = "Susie Choi", email = "sschoidev@gmail.com"}
 ]
 keywords = [
     "security", 
@@ -76,13 +76,10 @@ Documentation = "https://github.com/susie-Choi/rota#readme"
 Changelog = "https://github.com/susie-Choi/rota/releases"
 
 [project.scripts]
-rota = "zero_day_defense.cli:main"
-rota-collect = "zero_day_defense.cli:collect_main"
-rota-predict = "zero_day_defense.cli:predict_main"
-rota-validate = "zero_day_defense.cli:validate_main"
+rota = "rota.cli:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-zero_day_defense = ["py.typed"]
+rota = ["py.typed"]
