@@ -1,0 +1,27 @@
+{
+  "total_cves": 0,
+  "cvss_distribution": {},
+  "severity_distribution": {
+    "counts": {},
+    "percentages": {}
+  },
+  "vulnerability_type_distribution": {
+    "counts": {},
+    "percentages": {},
+    "top_10": {}
+  },
+  "project_distribution": {
+    "unique_projects": 0,
+    "counts": {},
+    "percentages": {},
+    "top_10": {},
+    "bottom_10": {}
+  },
+  "temporal_distribution": {},
+  "cwe_distribution": {
+    "unique_cwes": 0,
+    "total_cwe_mentions": 0,
+    "counts": {},
+    "top_20": {}
+  }
+}
