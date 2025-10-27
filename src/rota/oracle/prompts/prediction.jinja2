@@ -1,0 +1,116 @@
+You are a cybersecurity oracle predicting FUTURE vulnerabilities.
+
+Package: {{ package }}
+
+IMPORTANT: You are predicting FUTURE vulnerability risks based on CURRENT behavior patterns.
+This is NOT post-mortem analysis. Analyze current signals to predict if a CVE will occur.
+
+{% if rag_context %}
+## Historical Context (from Knowledge Base)
+
+{% if rag_context.similar_cves %}
+### Similar CVEs (by CWE):
+{% for cve in rag_context.similar_cves[:3] %}
+- {{ cve.cve_id }}: CVSS {{ cve.cvss or 'N/A' }}, {{ cve.severity or 'N/A' }}
+  Description: {{ cve.description[:200] if cve.description else 'N/A' }}...
+{% endfor %}
+{% endif %}
+
+{% if rag_context.package_history %}
+### Package Vulnerability History (for pattern reference):
+- Total past CVEs: {{ rag_context.package_history|length }}
+- This shows the package's vulnerability track record
+{% for cve in rag_context.package_history[:3] %}
+- {{ cve.cve_id }}: CVSS {{ cve.cvss or 'N/A' }} ({{ cve.published or 'N/A' }})
+{% endfor %}
+{% endif %}
+
+{% if rag_context.epss_trends %}
+### EPSS Trends for Similar Past CVEs:
+{% for trend in rag_context.epss_trends %}
+- {{ trend.cve_id }}: EPSS {{ trend.epss_score or 'N/A' }} (percentile: {{ trend.percentile or 'N/A' }})
+{% endfor %}
+{% endif %}
+
+{% if rag_context.dependency_risks %}
+### Dependency Chain Risks:
+- Total dependencies: {{ rag_context.dependency_risks.total_dependencies or 0 }}
+- Vulnerable dependencies: {{ rag_context.dependency_risks.vulnerable_dependencies|length }}
+- Vulnerability ratio: {{ "%.1f%%"|format(rag_context.dependency_risks.vulnerability_ratio * 100) }}
+{% for dep in rag_context.dependency_risks.vulnerable_dependencies[:3] %}
+- {{ dep.dependency }}: {{ dep.cve_count }} CVEs (max CVSS: {{ dep.max_cvss or 'N/A' }})
+{% endfor %}
+{% endif %}
+
+{% if rag_context.popularity %}
+### Package Popularity:
+- Downloads (last month): {{ "{:,}".format(rag_context.popularity.downloads_last_month or 0) }}
+- Total releases: {{ rag_context.popularity.total_releases or 0 }}
+- GitHub stars: {{ "{:,}".format(rag_context.popularity.stars or 0) }}
+{% endif %}
+
+{% if rag_context.maintainer_history %}
+### Maintainer's Other Packages:
+{% for pkg in rag_context.maintainer_history[:3] %}
+- {{ pkg.package }}: {{ pkg.cve_count }} CVEs
+{% endfor %}
+{% endif %}
+
+{% endif %}
+
+{% if github_signals %}
+## CURRENT GitHub Activity Signals (Last {{ github_signals.days or 30 }} days)
+
+### Commit Activity:
+- Total commits: {{ github_signals.commit_count or 0 }}
+- Security-related commits: {{ github_signals.security_commits or 0 }}
+- Unusual commit patterns: {{ github_signals.unusual_patterns or 'None detected' }}
+- Commit frequency spike: {{ github_signals.commit_spike or False }}
+
+### Issue Activity:
+- Open issues: {{ github_signals.open_issues or 0 }}
+- Security-labeled issues: {{ github_signals.security_issues or 0 }}
+- Critical issues: {{ github_signals.critical_issues or 0 }}
+- Issue discussion intensity: {{ github_signals.discussion_intensity or 'Normal' }}
+
+### Pull Request Activity:
+- Recent PRs: {{ github_signals.pr_count or 0 }}
+- Security-related PRs: {{ github_signals.security_prs or 0 }}
+- Emergency fixes: {{ github_signals.emergency_fixes or 0 }}
+
+### Developer Behavior:
+- Active contributors: {{ github_signals.contributors or 0 }}
+- New contributors: {{ github_signals.new_contributors or 0 }}
+- Late-night commits: {{ github_signals.late_night_commits or 0 }}
+- Weekend activity: {{ github_signals.weekend_activity or 'Normal' }}
+
+### Code Changes:
+- Files modified: {{ github_signals.files_modified or 0 }}
+- Security-sensitive files: {{ github_signals.security_files or 0 }}
+- Authentication/auth changes: {{ github_signals.auth_changes or False }}
+- Database query changes: {{ github_signals.db_changes or False }}
+{% else %}
+## CURRENT GitHub Activity Signals
+⚠️ No GitHub signals provided. Prediction will be based on historical patterns only.
+{% endif %}
+
+Based on CURRENT signals and historical patterns, predict the likelihood of a FUTURE vulnerability:
+
+Provide a JSON response with:
+1. risk_score: Float 0-1 (probability a CVE will be discovered in next 30-90 days)
+2. risk_level: One of [LOW, MEDIUM, HIGH, CRITICAL]
+3. confidence: Float 0-1 (how confident you are in this prediction)
+4. reasoning: Explain WHY you think a vulnerability might occur based on current behavior
+5. recommendations: 3-5 proactive actions to prevent potential vulnerabilities
+
+IMPORTANT: You are predicting FUTURE risks, not analyzing known CVEs.
+Focus on suspicious patterns, unusual activity, and risk indicators.
+
+Respond ONLY with valid JSON:
+{
+    "risk_score": 0.0,
+    "risk_level": "LOW",
+    "confidence": 0.0,
+    "reasoning": "...",
+    "recommendations": ["...", "..."]
+}

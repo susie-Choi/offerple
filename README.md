@@ -45,6 +45,23 @@ ROTA uses a wheel metaphor to represent its architecture:
 pip install rota
 ```
 
+### Environment Setup
+
+Create a `.env` file with required credentials:
+
+```bash
+# GitHub API (for behavioral signals)
+GITHUB_TOKEN=your_github_token
+
+# Gemini API (for LLM-based prediction)
+GEMINI_API_KEY=your_gemini_api_key
+
+# Neo4j Database (for knowledge graph)
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_password
+```
+
 ### Basic Usage
 
 ```bash
@@ -57,10 +74,17 @@ rota spokes collect-epss --cve-ids CVE-2025-1234
 # Collect CISA KEV catalog
 rota spokes collect-kev
 
+# Collect GitHub behavioral signals
+rota spokes collect-github django/django --days 30
+
 # Load data into Neo4j
 rota hub load-cve data/raw/cve/cves_20250127.jsonl
 rota hub load-epss data/raw/epss/epss_20250127.jsonl
 rota hub load-kev data/raw/kev/kev_20250127.jsonl
+rota hub load-github data/raw/github/django_django_signals.jsonl
+
+# Predict vulnerability risk
+rota oracle predict django/django --days 7
 
 # Check hub status
 rota hub status
@@ -70,13 +94,14 @@ rota hub status
 
 ROTA integrates multiple vulnerability data sources:
 
-| Source | Description | Coverage |
-|--------|-------------|----------|
-| **CVE/NVD** | National Vulnerability Database | All published CVEs |
-| **EPSS** | Exploit Prediction Scoring System | Daily probability scores |
-| **KEV** | CISA Known Exploited Vulnerabilities | Government-verified exploits |
-| **GitHub Advisory** | Package-level security advisories | npm, PyPI, Maven, etc. |
-| **Exploit-DB** | Public exploit database | Proof-of-concept exploits |
+| Source | Description | Coverage | Status |
+|--------|-------------|----------|--------|
+| **CVE/NVD** | National Vulnerability Database | All published CVEs | ✅ Working |
+| **EPSS** | Exploit Prediction Scoring System | Daily probability scores | ✅ Working |
+| **KEV** | CISA Known Exploited Vulnerabilities | Government-verified exploits | ✅ Working |
+| **GitHub Signals** | Behavioral signals from repositories | Commits, PRs, Issues | ✅ Working |
+| **GitHub Advisory** | Package-level security advisories | npm, PyPI, Maven, etc. | 🚧 Planned |
+| **Exploit-DB** | Public exploit database | Proof-of-concept exploits | ✅ Working |
 
 ## 🏗️ Architecture
 
@@ -84,6 +109,8 @@ ROTA integrates multiple vulnerability data sources:
 
 ```python
 from rota.spokes import CVECollector, EPSSCollector, KEVCollector
+from rota.spokes.github import GitHubSignalsCollector
+import os
 
 # Collect CVE data
 cve_collector = CVECollector()
@@ -99,6 +126,11 @@ stats = epss_collector.collect(cve_ids=["CVE-2025-1234"])
 # Collect KEV catalog
 kev_collector = KEVCollector()
 stats = kev_collector.collect()
+
+# Collect GitHub behavioral signals
+github_collector = GitHubSignalsCollector(token=os.getenv("GITHUB_TOKEN"))
+stats = github_collector.collect("django/django", days_back=30)
+print(f"Collected {stats['total_commits']} commits, {stats['total_issues']} issues")
 ```
 
 ### Hub (Data Integration)
@@ -139,15 +171,43 @@ clusters = clusterer.predict(features)
 ### Oracle (Prediction)
 
 ```python
-from rota.oracle import VulnerabilityPredictor
+from rota.oracle import VulnerabilityOracle
+from rota.spokes.github import GitHubSignalsCollector
+import os
 
-# Predict exploitation risk
-predictor = VulnerabilityPredictor()
-result = predictor.predict("CVE-2025-1234")
+# Collect GitHub signals
+collector = GitHubSignalsCollector(token=os.getenv("GITHUB_TOKEN"))
+result = collector.collect("django/django", days_back=7)
 
-print(f"Risk Score: {result['risk_score']}")
-print(f"Confidence: {result['confidence']}")
-print(f"Recommendation: {result['recommendation']}")
+# Load signals
+import json
+with open(result['output_file'], 'r') as f:
+    signals = json.loads(f.readline())
+
+# Predict WITHOUT RAG (no historical context)
+oracle_no_rag = VulnerabilityOracle(
+    api_key=os.getenv("GEMINI_API_KEY"),
+    use_rag=False
+)
+prediction = oracle_no_rag.predict("django/django", github_signals=signals)
+
+print(f"Risk Score: {prediction.risk_score}")
+print(f"Risk Level: {prediction.risk_level}")
+print(f"Confidence: {prediction.confidence}")
+print(f"Reasoning: {prediction.reasoning}")
+
+# Predict WITH RAG (with historical CVE context)
+oracle_with_rag = VulnerabilityOracle(
+    api_key=os.getenv("GEMINI_API_KEY"),
+    neo4j_uri=os.getenv("NEO4J_URI"),
+    neo4j_password=os.getenv("NEO4J_PASSWORD"),
+    use_rag=True
+)
+prediction_rag = oracle_with_rag.predict("django/django", github_signals=signals)
+
+print(f"\nWith RAG:")
+print(f"Risk Score: {prediction_rag.risk_score}")
+print(f"Risk Level: {prediction_rag.risk_level}")
 ```
 
 ### Axle (Evaluation)
@@ -211,6 +271,41 @@ config = load_config(Path("config.yaml"))
 - [Evaluation Guide](docs/guides/evaluation.md)
 - [API Reference](docs/api/)
 
+## 🧪 Testing
+
+Run the test suite to verify your setup:
+
+```bash
+# Test full workflow (Spokes → Hub → Oracle)
+python tests/test_workflow.py
+
+# Compare Oracle predictions with/without RAG
+python tests/test_oracle_comparison.py
+
+# Check Neo4j data
+python scripts/check_neo4j_data.py
+```
+
+### Test Results Example
+
+```
+ROTA Oracle Comparison Test (RAG vs No-RAG)
+================================================================================
+
+Results (No RAG):
+  - Risk Score: 0.55 (MEDIUM)
+  - Confidence: 0.80
+
+Results (With RAG):
+  - Risk Score: 0.58 (MEDIUM)
+  - Confidence: 0.80
+
+COMPARISON:
+  • Risk Score Difference: +0.03 (RAG slightly more conservative)
+  • Reasoning Similarity: 24.7% (RAG substantially changed analysis)
+  • Confidence: Same (0.80)
+```
+
 ## 🔬 Research
 
 ROTA is designed for security research with focus on:
@@ -265,4 +360,16 @@ If you use ROTA in your research, please cite:
 
 ---
 
-**ROTA v0.1.2** - Real-time Offensive Threat Assessment
+## 📚 Documentation
+
+- **[System Overview](docs/system-overview.md)** - Complete architecture and technical details
+- **[Usage Guide](docs/usage-guide.md)** - Step-by-step tutorials and API reference
+- [Architecture Overview](docs/architecture.md)
+- [Data Collection Guide](docs/guides/data-collection.md)
+- [Clustering Guide](docs/guides/clustering.md)
+- [Prediction Guide](docs/guides/prediction.md)
+- [Evaluation Guide](docs/guides/evaluation.md)
+
+---
+
+**ROTA v0.2.0** - Real-time Offensive Threat Assessment

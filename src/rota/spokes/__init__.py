@@ -15,6 +15,8 @@ from .cve import CVECollector
 from .epss import EPSSCollector
 from .kev import KEVCollector
 from .cwe import CWECollector
+from .github import GitHubSignalsCollector
+from .package import PackageCollector, DependencyCollector
 
 __all__ = [
     'BaseCollector',
@@ -22,4 +24,7 @@ __all__ = [
     'EPSSCollector',
     'KEVCollector',
     'CWECollector',
+    'GitHubSignalsCollector',
+    'PackageCollector',
+    'DependencyCollector',
 ]

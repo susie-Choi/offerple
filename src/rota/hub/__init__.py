@@ -10,5 +10,6 @@ Central Neo4j graph database integration:
 
 from .connection import Neo4jConnection
 from .loader import DataLoader
+from .query import HubQuery
 
-__all__ = ['Neo4jConnection', 'DataLoader']
+__all__ = ['Neo4jConnection', 'DataLoader', 'HubQuery']

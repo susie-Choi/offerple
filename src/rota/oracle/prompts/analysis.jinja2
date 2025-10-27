@@ -1,0 +1,42 @@
+You are a cybersecurity expert analyzing an existing CVE.
+
+Package: {{ package }}
+
+This is POST-MORTEM ANALYSIS of a known vulnerability.
+
+{% if cve_data %}
+## CVE Information
+- CVE ID: {{ cve_data.id or 'N/A' }}
+- Description: {{ cve_data.description or 'N/A' }}
+- CVSS Score: {{ cve_data.cvss_score or 'N/A' }}
+- Severity: {{ cve_data.severity or 'N/A' }}
+- CWE: {{ cve_data.cwe or 'N/A' }}
+{% endif %}
+
+{% if epss_data %}
+## EPSS Score
+- Exploit Probability: {{ epss_data.epss or 'N/A' }}
+- Percentile: {{ epss_data.percentile or 'N/A' }}
+{% endif %}
+
+{% if kev_data and kev_data.in_kev %}
+## CISA KEV Status
+- In KEV Catalog: Yes
+- Date Added: {{ kev_data.date_added or 'N/A' }}
+{% endif %}
+
+Analyze this CVE and provide:
+1. risk_score: Current exploitation risk (0-1)
+2. risk_level: Current threat level
+3. confidence: Your confidence in the assessment
+4. reasoning: Why this CVE is dangerous
+5. recommendations: Immediate mitigation steps
+
+Respond ONLY with valid JSON:
+{
+    "risk_score": 0.0,
+    "risk_level": "LOW",
+    "confidence": 0.0,
+    "reasoning": "...",
+    "recommendations": ["...", "..."]
+}

@@ -403,6 +403,201 @@ class DataLoader:
                 if line.strip():
                     data.append(json.loads(line))
         return data
+    
+    def load_package_data(self, jsonl_path: Path) -> Dict[str, int]:
+        """
+        Load package metadata into Neo4j.
+        
+        Args:
+            jsonl_path: Path to JSONL file with package data
+            
+        Returns:
+            Statistics (nodes_created, nodes_updated)
+        """
+        logger.info(f"Loading package data from {jsonl_path}")
+        
+        packages = self._read_jsonl(jsonl_path)
+        
+        nodes_created = 0
+        nodes_updated = 0
+        
+        with self.driver.session() as session:
+            for pkg in packages:
+                metadata = pkg.get('metadata', {})
+                stats = pkg.get('statistics', {})
+                
+                result = session.run("""
+                    MERGE (p:Package {name: $name, ecosystem: $ecosystem})
+                    ON CREATE SET
+                        p.created_at = datetime(),
+                        p.version = $version,
+                        p.description = $description,
+                        p.author = $author,
+                        p.license = $license,
+                        p.homepage = $homepage,
+                        p.downloads_last_month = $downloads_last_month,
+                        p.total_releases = $total_releases
+                    ON MATCH SET
+                        p.updated_at = datetime(),
+                        p.version = $version,
+                        p.downloads_last_month = $downloads_last_month,
+                        p.total_releases = $total_releases
+                    RETURN p, 
+                           CASE WHEN p.created_at = datetime() THEN 'created' ELSE 'updated' END as action
+                """, 
+                    name=pkg.get('package'),
+                    ecosystem=pkg.get('source'),
+                    version=metadata.get('version'),
+                    description=metadata.get('description') or metadata.get('summary'),
+                    author=metadata.get('author'),
+                    license=metadata.get('license'),
+                    homepage=metadata.get('home_page') or metadata.get('homepage'),
+                    downloads_last_month=stats.get('downloads_last_month', 0),
+                    total_releases=stats.get('total_releases', 0)
+                )
+                
+                record = result.single()
+                if record and record['action'] == 'created':
+                    nodes_created += 1
+                else:
+                    nodes_updated += 1
+        
+        logger.info(f"Loaded {nodes_created + nodes_updated} packages ({nodes_created} created, {nodes_updated} updated)")
+        
+        return {
+            'nodes_created': nodes_created,
+            'nodes_updated': nodes_updated,
+        }
+    
+    def load_dependency_data(self, jsonl_path: Path) -> Dict[str, int]:
+        """
+        Load dependency relationships into Neo4j.
+        
+        Args:
+            jsonl_path: Path to JSONL file with dependency data
+            
+        Returns:
+            Statistics (relationships_created)
+        """
+        logger.info(f"Loading dependency data from {jsonl_path}")
+        
+        dep_data = self._read_jsonl(jsonl_path)
+        
+        relationships_created = 0
+        
+        with self.driver.session() as session:
+            for data in dep_data:
+                ecosystem = data.get('source')
+                dependencies = data.get('dependencies', [])
+                
+                for dep in dependencies:
+                    from_pkg = dep.get('from')
+                    to_pkg = dep.get('to')
+                    depth = dep.get('depth', 0)
+                    requirement = dep.get('requirement') or dep.get('version')
+                    
+                    # Create dependency relationship
+                    result = session.run("""
+                        MERGE (p1:Package {name: $from_pkg, ecosystem: $ecosystem})
+                        MERGE (p2:Package {name: $to_pkg, ecosystem: $ecosystem})
+                        MERGE (p1)-[r:DEPENDS_ON]->(p2)
+                        ON CREATE SET
+                            r.created_at = datetime(),
+                            r.requirement = $requirement,
+                            r.depth = $depth
+                        ON MATCH SET
+                            r.updated_at = datetime(),
+                            r.requirement = $requirement
+                        RETURN r
+                    """,
+                        from_pkg=from_pkg,
+                        to_pkg=to_pkg,
+                        ecosystem=ecosystem,
+                        requirement=requirement,
+                        depth=depth
+                    )
+                    
+                    if result.single():
+                        relationships_created += 1
+        
+        logger.info(f"Created {relationships_created} dependency relationships")
+        
+        return {
+            'relationships_created': relationships_created,
+        }
+    
+    def load_github_signals(self, jsonl_path: Path) -> Dict[str, int]:
+        """
+        Load GitHub signals into Neo4j.
+        
+        Args:
+            jsonl_path: Path to JSONL file with GitHub signals
+            
+        Returns:
+            Statistics (nodes_created)
+        """
+        logger.info(f"Loading GitHub signals from {jsonl_path}")
+        
+        signals = self._read_jsonl(jsonl_path)
+        
+        nodes_created = 0
+        
+        with self.driver.session() as session:
+            for signal in signals:
+                repo = signal.get('repository')
+                
+                result = session.run("""
+                    MERGE (p:Package {name: $repo})
+                    ON CREATE SET p.ecosystem = 'github'
+                    
+                    CREATE (s:GitHubSignal {
+                        collected_at: datetime($collected_at),
+                        days: $days,
+                        commit_count: $commit_count,
+                        security_commits: $security_commits,
+                        commit_spike: $commit_spike,
+                        open_issues: $open_issues,
+                        security_issues: $security_issues,
+                        critical_issues: $critical_issues,
+                        pr_count: $pr_count,
+                        security_prs: $security_prs,
+                        emergency_fixes: $emergency_fixes,
+                        contributors: $contributors,
+                        auth_changes: $auth_changes,
+                        db_changes: $db_changes,
+                        unusual_patterns: $unusual_patterns
+                    })
+                    
+                    CREATE (p)-[:HAS_SIGNAL]->(s)
+                    
+                    RETURN s
+                """,
+                    repo=repo,
+                    collected_at=signal.get('collected_at'),
+                    days=signal.get('days', 30),
+                    commit_count=signal.get('commit_count', 0),
+                    security_commits=signal.get('security_commits', 0),
+                    commit_spike=signal.get('commit_spike', False),
+                    open_issues=signal.get('open_issues', 0),
+                    security_issues=signal.get('security_issues', 0),
+                    critical_issues=signal.get('critical_issues', 0),
+                    pr_count=signal.get('pr_count', 0),
+                    security_prs=signal.get('security_prs', 0),
+                    emergency_fixes=signal.get('emergency_fixes', 0),
+                    contributors=signal.get('contributors', 0),
+                    auth_changes=signal.get('auth_changes', False),
+                    db_changes=signal.get('db_changes', False),
+                    unusual_patterns=signal.get('unusual_patterns', 'None detected')
+                )
+                
+                if result.single():
+                    nodes_created += 1
+        
+        logger.info(f"Created {nodes_created} GitHub signal nodes")
+        
+        return {
+            'nodes_created': nodes_created,
+        }
 
 
 __all__ = ['DataLoader']

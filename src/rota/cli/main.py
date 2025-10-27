@@ -2,6 +2,7 @@
 
 import click
 import logging
+import os
 from pathlib import Path
 
 from ..config import get_config, load_config
@@ -222,10 +223,86 @@ def oracle():
 
 
 @oracle.command('predict')
-@click.argument('cve_id')
-def predict(cve_id):
-    """Predict exploitation risk for a CVE."""
-    click.echo(f"Prediction for {cve_id} not yet implemented")
+@click.argument('target')  # CVE ID or package name
+@click.option('--package', help='Package name (if target is CVE ID)')
+@click.option('--no-rag', is_flag=True, help='Disable RAG context')
+@click.option('--output', type=click.Path(), help='Save result to JSON file')
+def predict(target, package, no_rag, output):
+    """
+    Predict exploitation risk for a CVE or package.
+    
+    TARGET can be either a CVE ID (e.g., CVE-2024-1234) or package name.
+    """
+    from ..oracle import VulnerabilityOracle
+    import json
+    
+    # Determine if target is CVE ID or package
+    is_cve = target.startswith('CVE-')
+    cve_id = target if is_cve else None
+    pkg = package if is_cve else target
+    
+    if not pkg:
+        click.echo("Error: Package name required when predicting CVE")
+        return
+    
+    click.echo(f"🔮 Analyzing {target}...")
+    
+    try:
+        oracle_engine = VulnerabilityOracle(use_rag=not no_rag)
+        
+        result = oracle_engine.predict(
+            package=pkg,
+            cve_id=cve_id,
+            auto_fetch=True
+        )
+        
+        # Display results
+        click.echo("\n" + "="*80)
+        click.echo(f"📊 Prediction Results")
+        click.echo("="*80)
+        click.echo(f"\nPackage: {result.package}")
+        if result.cve_id:
+            click.echo(f"CVE: {result.cve_id}")
+        click.echo(f"\n🎯 Risk Score: {result.risk_score:.2f}/1.0")
+        click.echo(f"⚠️  Risk Level: {result.risk_level}")
+        click.echo(f"🎲 Confidence: {result.confidence:.2f}/1.0")
+        
+        click.echo(f"\n💭 Reasoning:")
+        click.echo(f"{result.reasoning}")
+        
+        click.echo(f"\n📋 Recommendations:")
+        for i, rec in enumerate(result.recommendations, 1):
+            click.echo(f"  {i}. {rec}")
+        
+        click.echo(f"\n📡 Signals Analyzed:")
+        for signal, available in result.signals_analyzed.items():
+            status = "✓" if available else "✗"
+            click.echo(f"  {status} {signal}")
+        
+        click.echo(f"\n⏰ Predicted at: {result.predicted_at}")
+        click.echo("="*80)
+        
+        # Save to file if requested
+        if output:
+            result_dict = {
+                'package': result.package,
+                'cve_id': result.cve_id,
+                'risk_score': result.risk_score,
+                'risk_level': result.risk_level,
+                'confidence': result.confidence,
+                'reasoning': result.reasoning,
+                'recommendations': result.recommendations,
+                'signals_analyzed': result.signals_analyzed,
+                'predicted_at': result.predicted_at.isoformat(),
+            }
+            with open(output, 'w') as f:
+                json.dump(result_dict, f, indent=2)
+            click.echo(f"\n💾 Results saved to {output}")
+        
+    except Exception as e:
+        click.echo(f"\n❌ Error: {str(e)}", err=True)
+        import traceback
+        traceback.print_exc()
 
 
 # Axle commands (Evaluation)
@@ -239,6 +316,138 @@ def axle():
 def validate():
     """Run temporal validation."""
     click.echo("Validation not yet implemented")
+
+
+@cli.command('analyze')
+@click.argument('target')  # CVE ID or package
+@click.option('--collect', is_flag=True, help='Collect fresh data before analysis')
+@click.option('--load-hub', is_flag=True, help='Load data to Neo4j hub')
+@click.option('--output', type=click.Path(), help='Save results to file')
+def analyze(target, collect, load_hub, output):
+    """
+    Complete analysis workflow: collect → load → predict.
+    
+    TARGET can be a CVE ID or package name.
+    """
+    from ..oracle import VulnerabilityOracle
+    from ..spokes import CVECollector, EPSSCollector, KEVCollector
+    from ..hub import Neo4jConnection, DataLoader
+    from pathlib import Path
+    import json
+    
+    is_cve = target.startswith('CVE-')
+    cve_id = target if is_cve else None
+    package = target if not is_cve else None
+    
+    click.echo(f"🚀 Starting complete analysis for {target}")
+    click.echo("="*80)
+    
+    # Step 1: Collect data (if requested)
+    if collect:
+        click.echo("\n📡 Step 1: Collecting data...")
+        
+        if cve_id:
+            # Collect CVE data
+            cve_collector = CVECollector(output_dir='data/raw')
+            cve_stats = cve_collector.collect(cve_ids=[cve_id])
+            click.echo(f"  ✓ Collected CVE data")
+            
+            # Collect EPSS
+            epss_collector = EPSSCollector(output_dir='data/raw')
+            epss_stats = epss_collector.collect(cve_ids=[cve_id])
+            click.echo(f"  ✓ Collected EPSS data")
+            
+            # Collect KEV
+            kev_collector = KEVCollector(output_dir='data/raw')
+            kev_stats = kev_collector.collect()
+            click.echo(f"  ✓ Collected KEV data")
+    
+    # Step 2: Load to Hub (if requested)
+    if load_hub and collect:
+        click.echo("\n🔄 Step 2: Loading data to Neo4j hub...")
+        
+        neo4j_uri = os.getenv('NEO4J_URI')
+        neo4j_user = os.getenv('NEO4J_USERNAME', 'neo4j')
+        neo4j_password = os.getenv('NEO4J_PASSWORD')
+        
+        if neo4j_uri and neo4j_password:
+            with Neo4jConnection(neo4j_uri, neo4j_user, neo4j_password) as conn:
+                loader = DataLoader(conn)
+                
+                # Load CVE
+                cve_file = Path('data/raw/cve') / f"{cve_id}.jsonl"
+                if cve_file.exists():
+                    loader.load_cve_data(cve_file)
+                    click.echo(f"  ✓ Loaded CVE data")
+                
+                # Load EPSS
+                epss_file = Path('data/raw/epss') / 'latest.jsonl'
+                if epss_file.exists():
+                    loader.load_epss_data(epss_file)
+                    click.echo(f"  ✓ Loaded EPSS data")
+                
+                # Load KEV
+                kev_file = Path('data/raw/kev') / 'catalog.jsonl'
+                if kev_file.exists():
+                    loader.load_kev_data(kev_file)
+                    click.echo(f"  ✓ Loaded KEV data")
+        else:
+            click.echo("  ⚠️  Neo4j credentials not found, skipping hub load")
+    
+    # Step 3: Predict
+    click.echo("\n🔮 Step 3: Running prediction...")
+    
+    try:
+        oracle_engine = VulnerabilityOracle(use_rag=True)
+        
+        result = oracle_engine.predict(
+            package=package or 'unknown',
+            cve_id=cve_id,
+            auto_fetch=True
+        )
+        
+        # Display results
+        click.echo("\n" + "="*80)
+        click.echo(f"📊 Analysis Results")
+        click.echo("="*80)
+        click.echo(f"\nTarget: {target}")
+        click.echo(f"🎯 Risk Score: {result.risk_score:.2f}/1.0")
+        click.echo(f"⚠️  Risk Level: {result.risk_level}")
+        click.echo(f"🎲 Confidence: {result.confidence:.2f}/1.0")
+        
+        click.echo(f"\n💭 Reasoning:")
+        click.echo(f"{result.reasoning}")
+        
+        click.echo(f"\n📋 Top Recommendations:")
+        for i, rec in enumerate(result.recommendations[:3], 1):
+            click.echo(f"  {i}. {rec}")
+        
+        click.echo("="*80)
+        
+        # Save results
+        if output:
+            result_dict = {
+                'target': target,
+                'package': result.package,
+                'cve_id': result.cve_id,
+                'risk_score': result.risk_score,
+                'risk_level': result.risk_level,
+                'confidence': result.confidence,
+                'reasoning': result.reasoning,
+                'recommendations': result.recommendations,
+                'signals_analyzed': result.signals_analyzed,
+                'predicted_at': result.predicted_at.isoformat(),
+            }
+            with open(output, 'w') as f:
+                json.dump(result_dict, f, indent=2)
+            click.echo(f"\n💾 Results saved to {output}")
+        
+        click.echo("\n✅ Analysis complete!")
+        
+    except Exception as e:
+        click.echo(f"\n❌ Error during prediction: {str(e)}", err=True)
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == '__main__':

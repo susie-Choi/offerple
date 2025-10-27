@@ -1,14 +1,6 @@
 """
-Oracle - Prediction and Risk Assessment Module
-
-Predicts vulnerability exploitation risk:
-- Risk scoring
-- Threat prediction
-- Confidence estimation
-- Recommendation generation
+Oracle - LLM-based vulnerability prediction engine.
 """
+from .predictor import VulnerabilityOracle, PredictionResult
 
-from .predictor import VulnerabilityPredictor
-from .scorer import RiskScorer
-
-__all__ = ['VulnerabilityPredictor', 'RiskScorer']
+__all__ = ['VulnerabilityOracle', 'PredictionResult']
