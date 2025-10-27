@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=62", "setuptools-scm>=8.0", "wheel"]
+requires = ["setuptools>=62", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "rota"
-dynamic = ["version"]
+version = "0.2.0"
 description = "AI-powered zero-day vulnerability prediction system"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -83,8 +83,3 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 rota = ["py.typed"]
-
-[tool.setuptools_scm]
-write_to = "src/rota/_version.py"
-version_scheme = "post-release"
-local_scheme = "no-local-version"
