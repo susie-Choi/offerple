@@ -100,7 +100,7 @@ ROTA integrates multiple vulnerability data sources:
 | **EPSS** | Exploit Prediction Scoring System | Daily probability scores | ✅ Working |
 | **KEV** | CISA Known Exploited Vulnerabilities | Government-verified exploits | ✅ Working |
 | **GitHub Signals** | Behavioral signals from repositories | Commits, PRs, Issues | ✅ Working |
-| **GitHub Advisory** | Package-level security advisories | npm, PyPI, Maven, etc. | 🚧 Planned |
+| **GitHub Advisory** | Package-level security advisories | npm, PyPI, Maven, etc. | ✅ Working |
 | **Exploit-DB** | Public exploit database | Proof-of-concept exploits | ✅ Working |
 
 ## 🏗️ Architecture
