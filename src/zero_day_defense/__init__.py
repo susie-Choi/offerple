@@ -3,7 +3,7 @@
 AI-powered zero-day vulnerability prediction system.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "Susie Choi"
 __email__ = "susie.choi@example.com"
 
