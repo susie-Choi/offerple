@@ -5,12 +5,26 @@ All notable changes to ROTA will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.1] - 2024-10-27
+## [0.1.3] - 2025-10-27
+
+### Changed
+- Reorganized documentation into `/docs/guides` and `/docs/paper` subdirectories
+- Translated all Korean documentation to English
+- Reorganized scripts into `/scripts/collection`, `/loading`, `/experiments`, `/deployment`, `/archive`
+- Added README.md to docs/ and scripts/ directories for better navigation
+- Cleaned up root directory (removed temporary files)
+- Updated GitHub Actions to auto-publish to PyPI on main branch changes
+
+### Added
+- Documentation structure guide in docs/README.md
+- Scripts organization guide in scripts/README.md
+
+## [0.1.1] - 2025-10-27
 
 ### Fixed
 - Version bump for PyPI release (0.1.0 filename was previously used)
 
-## [0.1.0] - 2024-10-16
+## [0.1.0] - 2025-10-16
 
 ### Added
 - Initial release of ROTA (Real-time Operational Threat Assessment)
