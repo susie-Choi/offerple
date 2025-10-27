@@ -1,8 +1,10 @@
 # ROTA - Real-time Operational Threat Assessment
 
-[![PyPI version](https://badge.fury.io/py/rota.svg)](https://badge.fury.io/py/rota)
+[![PyPI version](https://badge.fury.io/py/rota.svg)](https://pypi.org/project/rota/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Downloads](https://static.pepy.tech/badge/rota)](https://pepy.tech/project/rota)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub Stars](https://img.shields.io/github/stars/susie-Choi/rota?style=social)](https://github.com/susie-Choi/rota)
 
 **ROTA**는 AI 기반 실시간 제로데이 취약점 예측 시스템입니다. 코드 푸시 시점에 보안 위험을 사전에 감지하여 CI/CD 파이프라인에 통합할 수 있습니다.
 
