@@ -23,3 +23,8 @@ graph/
 # Test files
 test_*.py
 *_test.py
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
