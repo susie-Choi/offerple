@@ -49,18 +49,18 @@ pip install rota
 
 ```bash
 # Collect CVE data
-rota spokes collect-cve --start-date 2024-01-01 --end-date 2024-01-31
+rota spokes collect-cve --start-date 2025-01-01 --end-date 2025-01-31
 
 # Collect EPSS scores
-rota spokes collect-epss --cve-ids CVE-2024-1234
+rota spokes collect-epss --cve-ids CVE-2025-1234
 
 # Collect CISA KEV catalog
 rota spokes collect-kev
 
 # Load data into Neo4j
-rota hub load-cve data/raw/cve/cves_20240127.jsonl
-rota hub load-epss data/raw/epss/epss_20240127.jsonl
-rota hub load-kev data/raw/kev/kev_20240127.jsonl
+rota hub load-cve data/raw/cve/cves_20250127.jsonl
+rota hub load-epss data/raw/epss/epss_20250127.jsonl
+rota hub load-kev data/raw/kev/kev_20250127.jsonl
 
 # Check hub status
 rota hub status
@@ -88,13 +88,13 @@ from rota.spokes import CVECollector, EPSSCollector, KEVCollector
 # Collect CVE data
 cve_collector = CVECollector()
 stats = cve_collector.collect(
-    start_date="2024-01-01",
-    end_date="2024-01-31"
+    start_date="2025-01-01",
+    end_date="2025-01-31"
 )
 
 # Collect EPSS scores
 epss_collector = EPSSCollector()
-stats = epss_collector.collect(cve_ids=["CVE-2024-1234"])
+stats = epss_collector.collect(cve_ids=["CVE-2025-1234"])
 
 # Collect KEV catalog
 kev_collector = KEVCollector()
@@ -143,7 +143,7 @@ from rota.oracle import VulnerabilityPredictor
 
 # Predict exploitation risk
 predictor = VulnerabilityPredictor()
-result = predictor.predict("CVE-2024-1234")
+result = predictor.predict("CVE-2025-1234")
 
 print(f"Risk Score: {result['risk_score']}")
 print(f"Confidence: {result['confidence']}")
@@ -157,7 +157,7 @@ from rota.axle import TemporalValidator
 from datetime import datetime
 
 # Validate predictions with temporal awareness
-validator = TemporalValidator(cutoff_date=datetime(2024, 1, 1))
+validator = TemporalValidator(cutoff_date=datetime(2025, 1, 1))
 metrics = validator.validate(predictions, ground_truth)
 
 print(f"Precision: {metrics['precision']}")
@@ -255,10 +255,10 @@ MIT License - see [LICENSE](LICENSE) for details.
 If you use ROTA in your research, please cite:
 
 ```bibtex
-@software{rota2024,
+@software{rota2025,
   title = {ROTA: Real-time Offensive Threat Assessment},
   author = {Choi, Susie},
-  year = {2024},
+  year = {2025},
   url = {https://github.com/susie-Choi/rota}
 }
 ```

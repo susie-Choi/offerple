@@ -62,7 +62,7 @@ Zero-Day Defense Prediction System - Demo
 ================================================================================
 
 Package: apache/log4j
-Analysis Period: 2024-09-15 to 2024-10-15
+Analysis Period: 2025-09-15 to 2025-10-15
 
 Key Metrics:
   • Commits: 45
