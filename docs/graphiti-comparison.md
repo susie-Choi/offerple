@@ -1,6 +1,8 @@
 # Graphiti vs Manual Schema Comparison
 
-This document compares two approaches for loading CVE data into Neo4j.
+This document compares two approaches for loading CVE data into Neo4j for ROTA's hub component.
+
+> **Current Status**: ROTA uses manual schema design for production. Graphiti scripts are archived for reference.
 
 ## Approach 1: Manual Schema Design (Current)
 
@@ -20,10 +22,11 @@ This document compares two approaches for loading CVE data into Neo4j.
 
 ### Usage
 ```bash
-python scripts/loading/load_cve_to_neo4j.py data/raw/cve_data.jsonl \
-  --uri neo4j+s://26e236b3.databases.neo4j.io \
-  --username neo4j \
-  --password <password>
+# Load CVE data to Neo4j hub
+python scripts/loading/load_cve_to_neo4j.py data/raw/cve_data.jsonl
+
+# Or use ROTA CLI
+rota hub load-cve data/raw/cve_data.jsonl
 ```
 
 ### Advantages
@@ -47,8 +50,11 @@ python scripts/loading/load_cve_to_neo4j.py data/raw/cve_data.jsonl \
 
 ### Usage
 ```bash
-python scripts/loading/load_cve_with_graphiti.py data/raw/cve_data.jsonl
+# Archived - for reference only
+python scripts/archive/load_cve_with_graphiti.py data/raw/cve_data.jsonl
 ```
+
+> **Note**: Graphiti approach is experimental and archived. Not recommended for production use.
 
 ### Advantages
 - No manual schema design
@@ -108,6 +114,24 @@ graphiti.add_episode(
 ## Conclusion
 
 For ROTA project:
-- **Primary**: Manual schema (performance, cost)
-- **Secondary**: Graphiti for text analysis (research value)
-- **Future**: Hybrid approach for best results
+- **Current**: Manual schema (production-ready, fast, cost-effective)
+- **Archived**: Graphiti approach (experimental, high cost)
+- **Future**: Consider hybrid approach if unstructured text analysis becomes critical
+
+## ROTA Hub Architecture
+
+ROTA's hub component uses manual schema design:
+
+```
+src/rota/hub/
+├── connection.py  # Neo4j connection management
+└── loader.py      # Data loading utilities
+
+scripts/loading/
+├── load_cve_to_neo4j.py
+├── load_epss_to_neo4j.py
+├── load_advisory_to_neo4j.py
+└── load_exploits_to_neo4j.py
+```
+
+See [Data Roadmap](data-roadmap.md) for data collection priorities.

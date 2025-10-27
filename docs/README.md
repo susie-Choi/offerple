@@ -1,42 +1,53 @@
-# Documentation Structure
+# ROTA Documentation
 
-This directory contains all documentation for the ROTA project.
+This directory contains all documentation for the ROTA (Real-time Offensive Threat Assessment) project.
 
-## 📁 Directory Structure
+## 📁 Documentation Structure
 
 ### `/guides` - User Guides
-Practical guides for using and deploying the project
+Practical guides for using and deploying ROTA
 
-- `DATA_LOADING_GUIDE.md` - Data loading guide
-- `TEMPORAL_VALIDATION_GUIDE.md` - Temporal validation guide
-- `prediction_system_guide.md` - Prediction system usage guide
-- `TEMPORAL_SETUP.md` - Temporal setup guide
-- `HOW_TO_PUBLISH.md` - PyPI publishing guide
-- `CREATE_RELEASE.md` - Release creation guide
-- `PYPI_SETUP.md` - PyPI setup guide
+- **release-guide.md** - How to create and manage releases
+- **temporal-setup.md** - Preventing temporal data leakage in validation
 
-### `/paper` - Research Paper Documentation
-Documentation for academic paper writing and experiments
+### Root Level - Project Documentation
+Overview and planning documents
 
-- `PAPER_FRAMEWORK_SUMMARY.md` - Evaluation framework summary
-- `PAPER_EXPERIMENTS_GUIDE.md` - Experiment execution guide
-- `PAPER_EXPERIMENTS_RESULTS.md` - Detailed experiment results
-- `QUICK_START_PAPER.md` - Quick start for paper experiments
+- **data-roadmap.md** - Data collection roadmap and priorities
+- **research-directions.md** - Research directions for novel contributions
+- **performance-optimization.md** - Performance optimization strategies
+- **graphiti-comparison.md** - Comparison of Graphiti vs manual Neo4j schema
 
-### Root Level - Project Overview
-Overview and planning documents for the entire project
+## 🚀 Quick Links
 
-- `data_collection_overview.md` - Data collection overview
-- `DATA_ROADMAP.md` - Data roadmap
-- `IMPLEMENTATION_SUMMARY.md` - Implementation summary
-- `RESEARCH_DIRECTIONS.md` - Research directions
-- `REFACTORING_PLAN.md` - Refactoring plan
-- `PERFORMANCE_OPTIMIZATION.md` - Performance optimization
-- `graphiti_comparison.md` - Graphiti comparison
+### Getting Started
+- [Main README](../README.md) - Project overview and installation
+- [Quick Start Guide](../QUICKSTART.md) - Get started in 5 minutes
 
-## 🚀 Quick Start
+### Development
+- [Release Guide](guides/release-guide.md) - Creating releases
+- [Changelog](../CHANGELOG.md) - Version history
 
-- **Getting Started**: See root `README.md` or `QUICKSTART.md`
-- **Paper Experiments**: See `paper/QUICK_START_PAPER.md`
-- **System Usage**: See `guides/prediction_system_guide.md`
-- **Deployment**: See `guides/HOW_TO_PUBLISH.md`
+### Research
+- [Research Directions](research-directions.md) - Novel research contributions
+- [Data Roadmap](data-roadmap.md) - Data collection priorities
+
+## 📝 Contributing Documentation
+
+When adding new documentation:
+
+1. **User guides** → `docs/guides/`
+2. **Research docs** → `docs/` (root level)
+3. **API docs** → Consider adding `docs/api/` if needed
+
+Keep documentation:
+- **Concise** - Focus on essential information
+- **Up-to-date** - Remove outdated content
+- **English** - All documentation in English
+- **Practical** - Include code examples and commands
+
+## 📋 File Naming Convention
+
+- **Root important files**: UPPERCASE (README.md, CHANGELOG.md, LICENSE)
+- **Documentation files**: lowercase-with-dashes.md
+- **Guide files**: lowercase-with-dashes.md
