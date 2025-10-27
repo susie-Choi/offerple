@@ -1,5 +1,2 @@
 [console_scripts]
-rota = zero_day_defense.cli:main
-rota-collect = zero_day_defense.cli:collect_main
-rota-predict = zero_day_defense.cli:predict_main
-rota-validate = zero_day_defense.cli:validate_main
+rota = rota.cli:cli

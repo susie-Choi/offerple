@@ -1,7 +1,7 @@
 Metadata-Version: 2.4
 Name: rota
-Version: 0.1.1
-Summary: Real-time Operational Threat Assessment - AI-powered zero-day vulnerability prediction system
+Version: 0.1.2
+Summary: Real-time Offensive Threat Assessment - Zero-day vulnerability prediction using behavioral signals
 Author-email: Susie Choi <susie.choi@example.com>
 Maintainer-email: Susie Choi <susie.choi@example.com>
 License: MIT
@@ -49,202 +49,271 @@ Requires-Dist: plotly>=5.17.0; extra == "dashboard"
 Requires-Dist: pandas>=2.0.0; extra == "dashboard"
 Dynamic: license-file
 
-# ROTA - Real-time Operational Threat Assessment
+# ROTA - Real-time Offensive Threat Assessment
 
 [![PyPI version](https://badge.fury.io/py/rota.svg)](https://badge.fury.io/py/rota)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**ROTA**는 AI 기반 실시간 제로데이 취약점 예측 시스템입니다. 코드 푸시 시점에 보안 위험을 사전에 감지하여 CI/CD 파이프라인에 통합할 수 있습니다.
+**ROTA** is a research framework for predicting zero-day vulnerabilities using behavioral signals, clustering analysis, and temporal validation. It combines multiple data sources to identify high-risk vulnerabilities before they are actively exploited.
 
-## ✨ 주요 특징
+## 🎯 What is ROTA?
 
-- 🚀 **실시간 예측**: 코드 푸시 시점에 즉시 위험도 분석 (< 10초)
-- 🧠 **AI 기반**: GitHub 활동 패턴을 학습하여 취약점 징후 감지
-- 📊 **Historical Validation**: 실제 CVE 데이터로 검증된 예측 모델
-- 🔗 **CI/CD 통합**: GitHub Actions, Jenkins 등과 쉬운 연동
-- 📈 **다양한 데이터 소스**: CVE, GitHub, EPSS, Exploit-DB 통합 분석
+ROTA uses a wheel metaphor to represent its architecture:
 
-## 🚀 빠른 시작
+```
+                    ┌─────────────┐
+                    │   ORACLE    │
+                    │ (Prediction)│
+                    └──────┬──────┘
+                           │
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+   ┌────▼────┐        ┌────▼────┐       ┌────▼────┐
+   │  WHEEL  │        │   HUB   │       │  AXLE   │
+   │(Cluster)│◄───────┤ (Neo4j) │──────►│  (Eval) │
+   └────▲────┘        └────▲────┘       └─────────┘
+        │                  │
+        └──────────────────┼──────────────────┘
+                           │
+                      ┌────▼────┐
+                      │ SPOKES  │
+                      │ (Data)  │
+                      └─────────┘
+```
 
-### 설치
+- **Spokes**: Collect data from multiple sources (CVE, EPSS, KEV, etc.)
+- **Hub**: Central Neo4j graph database for data integration
+- **Wheel**: Clustering and pattern discovery
+- **Oracle**: Prediction and risk assessment
+- **Axle**: Evaluation and temporal validation
+
+## 🚀 Quick Start
+
+### Installation
 
 ```bash
 pip install rota
 ```
 
-### 기본 사용법
+### Basic Usage
 
 ```bash
-# 저장소 위험도 분석
-rota predict --repo django/django --commit abc123
+# Collect CVE data
+rota spokes collect-cve --start-date 2024-01-01 --end-date 2024-01-31
 
-# CVE 데이터 수집
-rota collect --source cve --output cve_data.jsonl
+# Collect EPSS scores
+rota spokes collect-epss --cve-ids CVE-2024-1234
 
-# Historical validation 실행
-rota validate --dataset cves.jsonl --output results/
+# Collect CISA KEV catalog
+rota spokes collect-kev
+
+# Load data into Neo4j
+rota hub load-cve data/raw/cve/cves_20240127.jsonl
+rota hub load-epss data/raw/epss/epss_20240127.jsonl
+rota hub load-kev data/raw/kev/kev_20240127.jsonl
+
+# Check hub status
+rota hub status
 ```
 
-### Python API
+## 📊 Data Sources
+
+ROTA integrates multiple vulnerability data sources:
+
+| Source | Description | Coverage |
+|--------|-------------|----------|
+| **CVE/NVD** | National Vulnerability Database | All published CVEs |
+| **EPSS** | Exploit Prediction Scoring System | Daily probability scores |
+| **KEV** | CISA Known Exploited Vulnerabilities | Government-verified exploits |
+| **GitHub Advisory** | Package-level security advisories | npm, PyPI, Maven, etc. |
+| **Exploit-DB** | Public exploit database | Proof-of-concept exploits |
+
+## 🏗️ Architecture
+
+### Spokes (Data Collection)
 
 ```python
-from rota import analyze_code_push
+from rota.spokes import CVECollector, EPSSCollector, KEVCollector
 
-# 특정 커밋의 위험도 분석
-result = analyze_code_push("django/django", "abc123")
+# Collect CVE data
+cve_collector = CVECollector()
+stats = cve_collector.collect(
+    start_date="2024-01-01",
+    end_date="2024-01-31"
+)
+
+# Collect EPSS scores
+epss_collector = EPSSCollector()
+stats = epss_collector.collect(cve_ids=["CVE-2024-1234"])
+
+# Collect KEV catalog
+kev_collector = KEVCollector()
+stats = kev_collector.collect()
+```
+
+### Hub (Data Integration)
+
+```python
+from rota.hub import Neo4jConnection, DataLoader
+from pathlib import Path
+
+# Connect to Neo4j
+with Neo4jConnection() as conn:
+    loader = DataLoader(conn)
+    
+    # Load CVE data
+    stats = loader.load_cve_data(Path("data/raw/cve/cves.jsonl"))
+    
+    # Load EPSS data
+    stats = loader.load_epss_data(Path("data/raw/epss/epss.jsonl"))
+    
+    # Load KEV data
+    stats = loader.load_kev_data(Path("data/raw/kev/kev.jsonl"))
+```
+
+### Wheel (Clustering)
+
+```python
+from rota.wheel import VulnerabilityClusterer, FeatureExtractor
+
+# Extract features
+extractor = FeatureExtractor()
+features = extractor.extract_from_neo4j()
+
+# Cluster vulnerabilities
+clusterer = VulnerabilityClusterer(method="dbscan")
+clusterer.fit(features)
+clusters = clusterer.predict(features)
+```
+
+### Oracle (Prediction)
+
+```python
+from rota.oracle import VulnerabilityPredictor
+
+# Predict exploitation risk
+predictor = VulnerabilityPredictor()
+result = predictor.predict("CVE-2024-1234")
+
 print(f"Risk Score: {result['risk_score']}")
+print(f"Confidence: {result['confidence']}")
+print(f"Recommendation: {result['recommendation']}")
 ```
 
-## 주요 기능
+### Axle (Evaluation)
 
-### 보안 취약점 지식 그래프 (Neo4j)
-다양한 데이터 소스를 통합하여 보안 취약점의 관계를 그래프로 표현합니다:
+```python
+from rota.axle import TemporalValidator
+from datetime import datetime
 
-- **CVE 데이터** (NVD): 취약점 상세 정보, CVSS 점수, 영향받는 제품
-- **GitHub Advisory**: 패키지별 보안 권고 및 패치 정보
-- **EPSS 점수**: 취약점이 실제로 exploit될 확률 예측
-- **Exploit Database**: 실제 exploit 코드 및 메타데이터
+# Validate predictions with temporal awareness
+validator = TemporalValidator(cutoff_date=datetime(2024, 1, 1))
+metrics = validator.validate(predictions, ground_truth)
 
-### 그래프 구조
-```
-CVE
-├─[:AFFECTS]→ CPE ←[:HAS_VERSION]─ Product ←[:PRODUCES]─ Vendor
-├─[:HAS_WEAKNESS]→ CWE
-├─[:HAS_REFERENCE]→ Reference
-├─[:HAS_EXPLOIT]→ Exploit
-└─ Properties: epss_score, cvssScore, cvssSeverity
-
-Advisory
-├─[:REFERENCES]→ CVE
-├─[:HAS_WEAKNESS]→ CWE
-└─ ←[:HAS_ADVISORY]─ Package
+print(f"Precision: {metrics['precision']}")
+print(f"Recall: {metrics['recall']}")
+print(f"Lead Time: {metrics['lead_time_days']} days")
 ```
 
-## 설치
+## 🔧 Configuration
 
-Python 3.10 이상을 권장합니다.
+Create a `config.yaml` file:
 
-```bash
-# 1. 가상환경 생성 및 활성화
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+```yaml
+# Data directories
+data_dir: data
+raw_dir: data/raw
+processed_dir: data/processed
 
-# 2. 의존성 설치
-pip install -r requirements.txt
+# Neo4j configuration
+neo4j_uri: bolt://localhost:7687
+neo4j_user: neo4j
+neo4j_password: your_password
 
-# 3. 패키지 설치
-pip install -e .
+# Collection settings
+request_timeout: 30.0
+rate_limit_sleep: 1.0
+
+# Clustering settings
+clustering_method: dbscan
+min_cluster_size: 5
+
+# Prediction settings
+risk_threshold: 0.7
+confidence_threshold: 0.6
 ```
 
-## 환경 설정
+Load configuration:
 
-`.env` 파일을 생성하여 필요한 환경변수를 설정합니다:
+```python
+from rota.config import load_config
+from pathlib import Path
 
-```bash
-# .env.example을 복사
-cp .env.example .env
-
-# .env 파일 편집
-# NEO4J_URI=neo4j+s://xxxxx.databases.neo4j.io
-# NEO4J_USERNAME=neo4j
-# NEO4J_PASSWORD=your-password
-# GITHUB_TOKEN=your-github-token (선택)
-# GOOGLE_API_KEY=your-gemini-key (선택)
+config = load_config(Path("config.yaml"))
 ```
 
-## 데이터 수집 및 로드
+## 📚 Documentation
 
-### 1. CVE 데이터 수집
-```bash
-python scripts/collect_cve_data.py config/cve_test_config.yaml
-python scripts/load_cve_to_neo4j.py data/raw/cve_data.jsonl
+- [Architecture Overview](docs/architecture.md)
+- [Data Collection Guide](docs/guides/data-collection.md)
+- [Clustering Guide](docs/guides/clustering.md)
+- [Prediction Guide](docs/guides/prediction.md)
+- [Evaluation Guide](docs/guides/evaluation.md)
+- [API Reference](docs/api/)
+
+## 🔬 Research
+
+ROTA is designed for security research with focus on:
+
+- **Temporal Validation**: Prevent data leakage in historical analysis
+- **Behavioral Signals**: GitHub activity, commit patterns, issue discussions
+- **Multi-Modal Learning**: Code, text, graph, and time-series signals
+- **Explainable Predictions**: Understand why vulnerabilities are flagged
+
+### Research Directions
+
+1. **LLM-based Causal Reasoning**: Explain why vulnerabilities occur
+2. **Temporal Knowledge Graphs**: Model vulnerability evolution over time
+3. **Active Learning**: Efficient project selection for analysis
+4. **Multi-Modal Fusion**: Combine code, text, graph, and temporal signals
+
+See [Research Directions](docs/research/directions.md) for details.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## 📧 Contact
+
+- **Author**: Susie Choi
+- **GitHub**: [susie-Choi/rota](https://github.com/susie-Choi/rota)
+- **Issues**: [GitHub Issues](https://github.com/susie-Choi/rota/issues)
+
+## 🙏 Acknowledgments
+
+- **NVD**: National Vulnerability Database
+- **FIRST**: Forum of Incident Response and Security Teams (EPSS)
+- **CISA**: Cybersecurity and Infrastructure Security Agency (KEV)
+- **Exploit-DB**: Offensive Security
+
+## 📊 Citation
+
+If you use ROTA in your research, please cite:
+
+```bibtex
+@software{rota2024,
+  title = {ROTA: Real-time Offensive Threat Assessment},
+  author = {Choi, Susie},
+  year = {2024},
+  url = {https://github.com/susie-Choi/rota}
+}
 ```
 
-### 2. GitHub Advisory 수집
-```bash
-python scripts/collect_github_advisory.py config/github_advisory_config.yaml
-python scripts/load_advisory_to_neo4j.py data/raw/github_advisory.jsonl
-```
+---
 
-### 3. EPSS 점수 수집
-```bash
-python scripts/collect_epss.py config/epss_config.yaml
-python scripts/load_epss_to_neo4j.py data/raw/epss_scores.jsonl
-```
-
-### 4. Exploit Database 수집
-```bash
-python scripts/collect_exploits.py config/exploit_config.yaml
-python scripts/load_exploits_to_neo4j.py data/raw/exploits.jsonl
-```
-
-## Neo4j 쿼리 예제
-
-### 위험도가 높은 CVE 찾기
-```cypher
-// EPSS 점수가 높고 exploit이 있는 CVE
-MATCH (c:CVE)-[:HAS_EXPLOIT]->(e:Exploit)
-WHERE c.epss_score > 0.5
-RETURN c.id, c.epss_score, c.cvssScore, count(e) as exploit_count
-ORDER BY c.epss_score DESC
-```
-
-### Log4Shell 전체 생태계 보기
-```cypher
-MATCH path = (v:Vendor)-[:PRODUCES]->(p:Product)-[:HAS_VERSION]->(cpe:CPE)
-              <-[:AFFECTS]-(c:CVE {id: 'CVE-2021-44228'})-[:HAS_EXPLOIT]->(e:Exploit)
-RETURN path LIMIT 50
-```
-
-### 특정 제품의 취약점 분석
-```cypher
-MATCH (v:Vendor {name: 'apache'})-[:PRODUCES]->(p:Product)
-      -[:HAS_VERSION]->(cpe:CPE)<-[:AFFECTS]-(c:CVE)
-RETURN p.name, count(DISTINCT c) as vuln_count, 
-       avg(c.cvssScore) as avg_cvss, avg(c.epss_score) as avg_epss
-ORDER BY vuln_count DESC
-```
-
-## 프로젝트 구조
-
-```
-zero-day-defense/
-├── src/zero_day_defense/          # Python 패키지
-│   ├── config.py                   # 설정 로더
-│   ├── pipeline.py                 # 데이터 파이프라인
-│   └── data_sources/               # 데이터 소스 수집기
-│       ├── cve.py                  # NVD CVE 수집
-│       ├── github_advisory.py      # GitHub Advisory 수집
-│       ├── epss.py                 # EPSS 점수 수집
-│       └── exploit_db.py           # Exploit-DB 수집
-├── scripts/                        # 실행 스크립트
-│   ├── collect_*.py                # 데이터 수집 스크립트
-│   └── load_*_to_neo4j.py         # Neo4j 로더
-├── config/                         # 설정 파일
-├── docs/                           # 문서
-└── .kiro/                          # Kiro IDE 설정
-    ├── steering/                   # AI 어시스턴트 가이드
-    └── specs/                      # 기능 스펙
-```
-
-## 환경 변수
-
-- `NEO4J_URI`: Neo4j 데이터베이스 URI
-- `NEO4J_USERNAME`: Neo4j 사용자명 (기본: neo4j)
-- `NEO4J_PASSWORD`: Neo4j 비밀번호
-- `GITHUB_TOKEN`: GitHub API 토큰 (선택, rate limit 향상)
-- `NVD_API_KEY`: NVD API 키 (선택, 빠른 수집)
-- `GOOGLE_API_KEY`: Google Gemini API 키 (선택, Graphiti 사용 시)
-
-## 문서
-
-- [Graphiti 비교 가이드](docs/graphiti_comparison.md): 수동 스키마 vs Graphiti 자동 추출
-- [데이터 수집 개요](docs/data_collection_overview.md): 파이프라인 설계 및 범위
-
-## 다음 단계
-
-1. ✅ 다중 데이터 소스 통합 (CVE, Advisory, EPSS, Exploit)
-2. ✅ Neo4j 그래프 데이터베이스 구축
-3. 🔄 데이터 시각화 대시보드
-4. 📋 LLM 기반 잠재 위험 추론 모듈
+**ROTA v0.1.2** - Real-time Offensive Threat Assessment

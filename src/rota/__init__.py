@@ -1,24 +1,17 @@
-"""ROTA - Real-time Operational Threat Assessment.
+"""
+ROTA - Real-time Offensive Threat Assessment
 
-A wheel-themed architecture for zero-day vulnerability prediction:
-- Spokes: Data collectors radiating from the hub
-- Hub: Central data integration point
-- Wheel: Pattern analysis and clustering
-- Oracle: Prediction engine
-- Axle: Validation framework
+A research framework for predicting zero-day vulnerabilities using
+behavioral signals, clustering, and temporal analysis.
+
+Architecture:
+    - Spokes: Data collection from multiple sources
+    - Hub: Central Neo4j graph database integration
+    - Wheel: Clustering and pattern discovery
+    - Oracle: Prediction and risk assessment
+    - Axle: Evaluation and validation
 """
 
-__version__ = "0.1.1"
-__author__ = "Susie Choi"
+from .__version__ import __version__
 
-# Main API exports
-from .oracle.predictor import predict_vulnerability_risk
-from .spokes.cve import CVECollector
-from .wheel.patterns import PatternAnalyzer
-
-__all__ = [
-    "predict_vulnerability_risk",
-    "CVECollector",
-    "PatternAnalyzer",
-    "__version__",
-]
+__all__ = ['__version__']

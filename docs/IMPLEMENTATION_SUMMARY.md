@@ -1,200 +1,200 @@
-# Zero-Day Defense Prediction System - Implementation Summary
+# ROTA Prediction System - Implementation Summary
 
-## 프로젝트 개요
+## Project Overview
 
-**목표**: t 시점의 신호를 분석하여 t+1 시점의 zero-day 취약점 발생을 예측하는 LLM Agent 시스템
+**Goal**: LLM Agent system that analyzes signals at time t to predict zero-day vulnerabilities at time t+1
 
-**완료 날짜**: 2025-10-15
+**Completion Date**: 2025-10-15
 
-**구현 범위**: 25/37 작업 완료 (68%)
+**Implementation Scope**: 25/37 tasks completed (68%)
 
-## 구현된 기능
+## Implemented Features
 
-### ✅ 1. 프로젝트 구조 및 기본 클래스 (Task 1)
+### ✅ 1. Project Structure and Base Classes (Task 1)
 
-- `src/zero_day_defense/prediction/` 패키지 구조
-- 8개 데이터 모델 (CommitSignal, PRSignal, IssueSignal, ReleaseSignal, FeatureVector, ThreatScore, ThreatScenario, Recommendations)
-- 예외 클래스 정의
-- requirements.txt 업데이트 (Gemini API 포함)
+- `src/zero_day_defense/prediction/` package structure
+- 8 data models (CommitSignal, PRSignal, IssueSignal, ReleaseSignal, FeatureVector, ThreatScore, ThreatScenario, Recommendations)
+- Exception class definitions
+- requirements.txt updated (including Gemini API)
 
-### ✅ 2. GitHub 신호 수집 (Task 2.1-2.5)
+### ✅ 2. GitHub Signal Collection (Task 2.1-2.5)
 
 **GitHubSignalCollector**
-- ✅ 커밋 히스토리 수집 (페이지네이션, rate limiting)
-- ✅ Pull Request 히스토리 수집
-- ✅ 이슈 토론 수집 (보안 키워드 탐지)
-- ✅ 릴리즈 히스토리 수집
-- ✅ TimeSeriesStore (JSONL 저장/로드)
+- ✅ Commit history collection (pagination, rate limiting)
+- ✅ Pull Request history collection
+- ✅ Issue discussion collection (security keyword detection)
+- ✅ Release history collection
+- ✅ TimeSeriesStore (JSONL save/load)
 
-**테스트**: 9개 단위 테스트 통과
+**Testing**: 9 unit tests passing
 
-### ✅ 3. 특징 추출 및 임베딩 (Task 3.1-3.5)
+### ✅ 3. Feature Extraction and Embedding (Task 3.1-3.5)
 
 **FeatureExtractor**
-- ✅ 커밋 특징 (18개): 빈도, 라인 변경, 작성자 다양성, 시간 패턴, 파일 타입
-- ✅ PR 특징 (5개): 빈도, 머지 시간, 리뷰 수, 보안 라벨
-- ✅ 이슈 특징 (6개): 빈도, 보안 키워드, 해결 시간, 참여자
-- ✅ 릴리즈 특징 (5개): 빈도, 버전 업데이트 패턴
-- ✅ 시계열 특징 (3개): 트렌드, 변동성, 최근 활동
+- ✅ Commit features (18): frequency, line changes, author diversity, time patterns, file types
+- ✅ PR features (5): frequency, merge time, review count, security labels
+- ✅ Issue features (6): frequency, security keywords, resolution time, participants
+- ✅ Release features (5): frequency, version update patterns
+- ✅ Time-series features (3): trends, volatility, recent activity
 
 **LLMEmbedder** (Gemini API)
-- ✅ 커밋 메시지 임베딩
-- ✅ PR 설명 임베딩
-- ✅ 이슈 토론 임베딩
-- ✅ 임베딩 집계 (mean, max, sum)
+- ✅ Commit message embeddings
+- ✅ PR description embeddings
+- ✅ Issue discussion embeddings
+- ✅ Embedding aggregation (mean, max, sum)
 
 **FeatureVectorBuilder**
-- ✅ 구조적 특징 정규화 (StandardScaler)
-- ✅ 의미론적 임베딩 정규화 (L2)
-- ✅ 특징 벡터 통합
+- ✅ Structural feature normalization (StandardScaler)
+- ✅ Semantic embedding normalization (L2)
+- ✅ Feature vector integration
 
-**테스트**: 15개 단위 테스트 통과
+**Testing**: 15 unit tests passing
 
-### ✅ 4. CVE 클러스터링 (Task 4.1-4.3)
+### ✅ 4. CVE Clustering (Task 4.1-4.3)
 
 **CVEClusterer**
-- ✅ K-means 클러스터링
-- ✅ DBSCAN 클러스터링
-- ✅ 클러스터 메타데이터 생성
-- ✅ 신규 벡터 클러스터 할당
-- ✅ Neo4j 통합 (클러스터 저장)
-- ✅ 모델 저장/로드 (pickle)
+- ✅ K-means clustering
+- ✅ DBSCAN clustering
+- ✅ Cluster metadata generation
+- ✅ New vector cluster assignment
+- ✅ Neo4j integration (cluster storage)
+- ✅ Model save/load (pickle)
 
-### ✅ 5. 예측 엔진 (Task 5.1-5.3)
+### ✅ 5. Prediction Engine (Task 5.1-5.3)
 
 **PredictionScorer**
-- ✅ 위협 점수 계산 (거리 + 클러스터 심각도)
-- ✅ 코사인 유사도 계산
-- ✅ 유사 CVE 검색 (top-k)
-- ✅ 위험 수준 분류 (LOW/MEDIUM/HIGH/CRITICAL)
-- ✅ 신뢰도 계산
-- ✅ Neo4j 통합 (예측 저장)
+- ✅ Threat score calculation (distance + cluster severity)
+- ✅ Cosine similarity calculation
+- ✅ Similar CVE search (top-k)
+- ✅ Risk level classification (LOW/MEDIUM/HIGH/CRITICAL)
+- ✅ Confidence calculation
+- ✅ Neo4j integration (prediction storage)
 
-### ✅ 6. LLM Agent 시스템 (Task 6.1-6.4)
+### ✅ 6. LLM Agent System (Task 6.1-6.4)
 
 **SignalAnalyzerAgent** (Gemini)
-- ✅ 커밋 분석 (보안 패턴, 의심스러운 변경)
-- ✅ 토론 분석 (보안 우려, 개발자 반응)
-- ✅ 의존성 분석 (위험한 업데이트, 전이적 위험)
+- ✅ Commit analysis (security patterns, suspicious changes)
+- ✅ Discussion analysis (security concerns, developer reactions)
+- ✅ Dependency analysis (risky updates, transitive risks)
 
 **ThreatAssessmentAgent** (Gemini)
-- ✅ 위협 시나리오 생성 (공격 벡터, 영향 평가)
-- ✅ 신뢰도 평가
-- ✅ 과거 CVE 패턴 비교
+- ✅ Threat scenario generation (attack vectors, impact assessment)
+- ✅ Confidence evaluation
+- ✅ Historical CVE pattern comparison
 
 **RecommendationAgent** (Gemini)
-- ✅ 즉각 조치 제안
-- ✅ 모니터링 전략
-- ✅ 완화 옵션
-- ✅ 대체 패키지 제안
-- ✅ 타임라인 제공
+- ✅ Immediate action suggestions
+- ✅ Monitoring strategies
+- ✅ Mitigation options
+- ✅ Alternative package suggestions
+- ✅ Timeline provision
 
-### ✅ 7. 검증 및 피드백 (Task 7.1-7.3)
+### ✅ 7. Validation and Feedback (Task 7.1-7.3)
 
 **PredictionValidator**
-- ✅ 예측 검증 (TP/FP/TN/FN)
-- ✅ 성능 메트릭 계산 (Precision, Recall, F1, Accuracy)
-- ✅ Confusion Matrix 생성
-- ✅ Neo4j 통합 (메트릭 저장)
+- ✅ Prediction validation (TP/FP/TN/FN)
+- ✅ Performance metrics calculation (Precision, Recall, F1, Accuracy)
+- ✅ Confusion Matrix generation
+- ✅ Neo4j integration (metrics storage)
 
 **FeedbackLoop**
-- ⚠️ 기본 구조만 구현 (상세 구현 필요)
+- ⚠️ Basic structure only (detailed implementation needed)
 
-### ✅ 8. CLI 스크립트 (Task 8.3)
+### ✅ 8. CLI Scripts (Task 8.3)
 
 **run_prediction_demo.py**
-- ✅ GitHub 신호 수집
-- ✅ 특징 추출
-- ✅ 임베딩 생성
-- ✅ 특징 벡터 빌드
-- ✅ 결과 표시
+- ✅ GitHub signal collection
+- ✅ Feature extraction
+- ✅ Embedding generation
+- ✅ Feature vector building
+- ✅ Results display
 
-## 미구현 기능
+## Unimplemented Features
 
-### ⏳ 8.1-8.2 파이프라인 오케스트레이터
-- PredictionPipeline 클래스
-- 자동화 스케줄링
-- 에러 핸들링 및 로깅
+### ⏳ 8.1-8.2 Pipeline Orchestrator
+- PredictionPipeline class
+- Automated scheduling
+- Error handling and logging
 
-### ⏳ 9. 대시보드 확장 (Task 9.1-9.6)
-- Threat Predictions 페이지
-- Signal Timeline 페이지
-- Cluster Analysis 페이지
-- LLM Analysis 페이지
-- Model Performance 페이지
-- 실시간 업데이트
+### ⏳ 9. Dashboard Extension (Task 9.1-9.6)
+- Threat Predictions page
+- Signal Timeline page
+- Cluster Analysis page
+- LLM Analysis page
+- Model Performance page
+- Real-time updates
 
-### ⏳ 10. 통합 테스트 및 문서화 (Task 10.1-10.3)
-- End-to-end 통합 테스트
-- 사용자 문서 (일부 완료)
-- 개발자 문서
+### ⏳ 10. Integration Testing and Documentation (Task 10.1-10.3)
+- End-to-end integration tests
+- User documentation (partially complete)
+- Developer documentation
 
-## 기술 스택
+## Technology Stack
 
-### 핵심 라이브러리
+### Core Libraries
 - **LLM**: google-generativeai (Gemini API)
 - **ML**: scikit-learn (clustering, normalization)
 - **Graph DB**: neo4j
 - **Data**: numpy, pandas
 - **API**: requests (GitHub API)
 
-### 개발 도구
+### Development Tools
 - **Testing**: pytest
-- **Linting**: (설정 필요)
-- **CI/CD**: (설정 필요)
+- **Linting**: (needs configuration)
+- **CI/CD**: (needs configuration)
 
-## 데이터 흐름
+## Data Flow
 
 ```
 GitHub API
     ↓
-GitHubSignalCollector (커밋, PR, 이슈, 릴리즈)
+GitHubSignalCollector (commits, PRs, issues, releases)
     ↓
-TimeSeriesStore (JSONL 저장)
+TimeSeriesStore (JSONL storage)
     ↓
-FeatureExtractor (37개 구조적 특징)
+FeatureExtractor (37 structural features)
     ↓
-LLMEmbedder (Gemini 임베딩)
+LLMEmbedder (Gemini embeddings)
     ↓
-FeatureVectorBuilder (정규화 및 통합)
+FeatureVectorBuilder (normalization and integration)
     ↓
 CVEClusterer (K-means/DBSCAN)
     ↓
-PredictionScorer (위협 점수 계산)
+PredictionScorer (threat score calculation)
     ↓
-LLM Agents (Gemini 분석)
+LLM Agents (Gemini analysis)
     ↓
-Neo4j (데이터 저장)
+Neo4j (data storage)
     ↓
-Dashboard (시각화)
+Dashboard (visualization)
 ```
 
-## 성능 특성
+## Performance Characteristics
 
-### 처리 속도
-- 신호 수집: ~30초 (30일 히스토리, 중간 규모 프로젝트)
-- 특징 추출: ~1초
-- 임베딩 생성: ~2-5초 (Gemini API)
-- 클러스터링: ~0.1초 (100개 CVE)
-- 예측: ~0.1초
+### Processing Speed
+- Signal collection: ~30 seconds (30-day history, medium-sized project)
+- Feature extraction: ~1 second
+- Embedding generation: ~2-5 seconds (Gemini API)
+- Clustering: ~0.1 second (100 CVEs)
+- Prediction: ~0.1 second
 
-### API 사용량
-- GitHub API: ~10-50 requests (프로젝트 규모에 따라)
-- Gemini API: ~3-5 requests (임베딩 + 분석)
+### API Usage
+- GitHub API: ~10-50 requests (depending on project size)
+- Gemini API: ~3-5 requests (embedding + analysis)
 
-### 메모리 사용
-- 특징 벡터: ~10KB per package
-- 클러스터 모델: ~1MB (100개 CVE)
+### Memory Usage
+- Feature vector: ~10KB per package
+- Cluster model: ~1MB (100 CVEs)
 
-## 사용 예시
+## Usage Examples
 
-### 기본 사용
+### Basic Usage
 
 ```bash
-# 데모 실행
+# Run demo
 python scripts/run_prediction_demo.py --repo apache/log4j --days 90
 
-# 출력:
+# Output:
 # ✓ Found 245 commits
 # ✓ Found 89 pull requests
 # ✓ Found 156 issues
@@ -208,30 +208,30 @@ python scripts/run_prediction_demo.py --repo apache/log4j --days 90
 ```python
 from zero_day_defense.prediction import *
 
-# 1. 신호 수집
+# 1. Collect signals
 collector = GitHubSignalCollector()
 commits = collector.collect_commit_history("owner/repo", since, until)
 
-# 2. 특징 추출
+# 2. Extract features
 extractor = FeatureExtractor()
 features = extractor.extract_commit_features(commits)
 
-# 3. 임베딩
+# 3. Generate embeddings
 embedder = LLMEmbedder()
 embeddings = embedder.embed_commit_messages(commits)
 
-# 4. 벡터 빌드
+# 4. Build vector
 builder = FeatureVectorBuilder()
 vector = builder.build_vector("owner/repo", (since, until), features, embeddings)
 
-# 5. 예측
+# 5. Predict
 clusterer = CVEClusterer()
 clusterer.fit(historical_cve_vectors)
 
 scorer = PredictionScorer(clusterer)
 threat_score = scorer.score_package(vector)
 
-# 6. LLM 분석
+# 6. LLM analysis
 analyzer = SignalAnalyzerAgent()
 analysis = analyzer.analyze_commits(commits, {"package": "owner/repo"})
 
@@ -242,47 +242,47 @@ recommender = RecommendationAgent()
 recommendations = recommender.generate_recommendations(scenario, context)
 ```
 
-## 알려진 제한사항
+## Known Limitations
 
-1. **시간적 데이터 누수**: 현재 구현은 cutoff date를 지원하지만, 실제 CVE 공개 날짜와의 연동이 필요
-2. **의존성 분석**: 릴리즈 데이터에서 실제 의존성 파싱이 구현되지 않음
-3. **클러스터 메타데이터**: CVE의 실제 CWE, CVSS, EPSS 데이터 연동 필요
-4. **대시보드**: 예측 결과 시각화 미구현
-5. **자동화**: 스케줄링 및 파이프라인 오케스트레이션 미구현
+1. **Temporal Data Leakage**: Current implementation supports cutoff date, but needs integration with actual CVE publication dates
+2. **Dependency Analysis**: Actual dependency parsing from release data not implemented
+3. **Cluster Metadata**: Needs integration with actual CVE CWE, CVSS, EPSS data
+4. **Dashboard**: Prediction result visualization not implemented
+5. **Automation**: Scheduling and pipeline orchestration not implemented
 
-## 다음 단계
+## Next Steps
 
-### 단기 (1-2주)
-1. ✅ 기본 기능 구현 완료
-2. ⏳ 통합 테스트 작성
-3. ⏳ 대시보드 기본 페이지 구현
-4. ⏳ 파이프라인 오케스트레이터 구현
+### Short-term (1-2 weeks)
+1. ✅ Complete basic functionality
+2. ⏳ Write integration tests
+3. ⏳ Implement basic dashboard pages
+4. ⏳ Implement pipeline orchestrator
 
-### 중기 (1개월)
-1. ⏳ 실제 CVE 데이터로 클러스터 학습
-2. ⏳ 과거 CVE 데이터로 예측 정확도 검증
-3. ⏳ 대시보드 고급 기능 (클러스터 시각화, 시계열 차트)
-4. ⏳ 자동화 스케줄러 구현
+### Mid-term (1 month)
+1. ⏳ Train clusters with real CVE data
+2. ⏳ Validate prediction accuracy with historical CVE data
+3. ⏳ Advanced dashboard features (cluster visualization, time-series charts)
+4. ⏳ Implement automated scheduler
 
-### 장기 (3개월)
-1. ⏳ 프로덕션 배포
-2. ⏳ 실시간 모니터링 시스템
-3. ⏳ 알림 시스템 (Slack, Email)
-4. ⏳ 모델 지속적 개선
+### Long-term (3 months)
+1. ⏳ Production deployment
+2. ⏳ Real-time monitoring system
+3. ⏳ Alert system (Slack, Email)
+4. ⏳ Continuous model improvement
 
-## 기여자
+## Contributors
 
-- 개발: Kiro AI Assistant
-- 설계: 사용자 요구사항 기반
-- 테스트: 자동화된 단위 테스트
+- Development: Kiro AI Assistant
+- Design: Based on user requirements
+- Testing: Automated unit tests
 
-## 라이선스
+## License
 
-프로젝트 라이선스에 따름
+Follows project license
 
-## 참고 문서
+## Reference Documentation
 
-- [Prediction System Guide](./prediction_system_guide.md)
+- [Prediction System Guide](./guides/prediction_system_guide.md)
 - [Requirements](../.kiro/specs/zero-day-prediction-system/requirements.md)
 - [Design](../.kiro/specs/zero-day-prediction-system/design.md)
 - [Tasks](../.kiro/specs/zero-day-prediction-system/tasks.md)

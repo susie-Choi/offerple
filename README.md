@@ -1,20 +1,41 @@
-# ROTA - Real-time Operational Threat Assessment
+# ROTA - Real-time Offensive Threat Assessment
 
-[![PyPI version](https://badge.fury.io/py/rota.svg)](https://pypi.org/project/rota/)
+[![PyPI version](https://badge.fury.io/py/rota.svg)](https://badge.fury.io/py/rota)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Downloads](https://static.pepy.tech/badge/rota)](https://pepy.tech/project/rota)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Stars](https://img.shields.io/github/stars/susie-Choi/rota?style=social)](https://github.com/susie-Choi/rota)
 
-**ROTA** is an AI-powered real-time zero-day vulnerability prediction system. It detects security risks at code push time and integrates seamlessly with CI/CD pipelines.
+**ROTA** is a research framework for predicting zero-day vulnerabilities using behavioral signals, clustering analysis, and temporal validation. It combines multiple data sources to identify high-risk vulnerabilities before they are actively exploited.
 
-## ✨ Key Features
+## 🎯 What is ROTA?
 
-- 🚀 **Real-time Prediction**: Instant risk analysis on code push (< 10 seconds)
-- 🧠 **AI-Powered**: Learns GitHub activity patterns to detect vulnerability signals
-- 📊 **Historical Validation**: Prediction model validated on real CVE data
-- 🔗 **CI/CD Integration**: Easy integration with GitHub Actions, Jenkins, etc.
-- 📈 **Multi-source Analysis**: Integrates CVE, GitHub, EPSS, and Exploit-DB data
+ROTA uses a wheel metaphor to represent its architecture:
+
+```
+                    ┌─────────────┐
+                    │   ORACLE    │
+                    │ (Prediction)│
+                    └──────┬──────┘
+                           │
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+   ┌────▼────┐        ┌────▼────┐       ┌────▼────┐
+   │  WHEEL  │        │   HUB   │       │  AXLE   │
+   │(Cluster)│◄───────┤ (Neo4j) │──────►│  (Eval) │
+   └────▲────┘        └────▲────┘       └─────────┘
+        │                  │
+        └──────────────────┼──────────────────┘
+                           │
+                      ┌────▼────┐
+                      │ SPOKES  │
+                      │ (Data)  │
+                      └─────────┘
+```
+
+- **Spokes**: Collect data from multiple sources (CVE, EPSS, KEV, etc.)
+- **Hub**: Central Neo4j graph database for data integration
+- **Wheel**: Clustering and pattern discovery
+- **Oracle**: Prediction and risk assessment
+- **Axle**: Evaluation and temporal validation
 
 ## 🚀 Quick Start
 
@@ -27,222 +48,221 @@ pip install rota
 ### Basic Usage
 
 ```bash
-# Analyze repository risk
-rota predict --repo django/django --commit abc123
-
 # Collect CVE data
-rota collect --source cve --output cve_data.jsonl
+rota spokes collect-cve --start-date 2024-01-01 --end-date 2024-01-31
 
-# Run historical validation
-rota validate --dataset cves.jsonl --output results/
+# Collect EPSS scores
+rota spokes collect-epss --cve-ids CVE-2024-1234
+
+# Collect CISA KEV catalog
+rota spokes collect-kev
+
+# Load data into Neo4j
+rota hub load-cve data/raw/cve/cves_20240127.jsonl
+rota hub load-epss data/raw/epss/epss_20240127.jsonl
+rota hub load-kev data/raw/kev/kev_20240127.jsonl
+
+# Check hub status
+rota hub status
 ```
 
-### Python API
+## 📊 Data Sources
 
-```python
-from rota import analyze_code_push
+ROTA integrates multiple vulnerability data sources:
 
-# Analyze specific commit risk
-result = analyze_code_push("django/django", "abc123")
-print(f"Risk Score: {result['risk_score']}")
-```
+| Source | Description | Coverage |
+|--------|-------------|----------|
+| **CVE/NVD** | National Vulnerability Database | All published CVEs |
+| **EPSS** | Exploit Prediction Scoring System | Daily probability scores |
+| **KEV** | CISA Known Exploited Vulnerabilities | Government-verified exploits |
+| **GitHub Advisory** | Package-level security advisories | npm, PyPI, Maven, etc. |
+| **Exploit-DB** | Public exploit database | Proof-of-concept exploits |
 
 ## 🏗️ Architecture
 
-ROTA uses a wheel-themed architecture:
+### Spokes (Data Collection)
 
-- **Spokes**: Multi-source data collectors (CVE, GitHub, EPSS, Exploit-DB)
-- **Hub**: Neo4j-based knowledge graph integration
-- **Wheel**: Pattern analysis and clustering
-- **Oracle**: AI-powered prediction engine
-- **Axle**: Historical validation framework
+```python
+from rota.spokes import CVECollector, EPSSCollector, KEVCollector
 
-## 📦 Core Components
+# Collect CVE data
+cve_collector = CVECollector()
+stats = cve_collector.collect(
+    start_date="2024-01-01",
+    end_date="2024-01-31"
+)
 
-### Security Vulnerability Knowledge Graph
+# Collect EPSS scores
+epss_collector = EPSSCollector()
+stats = epss_collector.collect(cve_ids=["CVE-2024-1234"])
 
-Integrates multiple data sources into a unified graph structure:
-
-- **CVE Data** (NVD): Vulnerability details, CVSS scores, affected products
-- **GitHub Advisory**: Package-specific security advisories and patches
-- **EPSS Scores**: Probability of exploitation predictions
-- **Exploit Database**: Real exploit code and metadata
-
-### Graph Structure
-
-```
-CVE
-├─[:AFFECTS]→ CPE ←[:HAS_VERSION]─ Product ←[:PRODUCES]─ Vendor
-├─[:HAS_WEAKNESS]→ CWE
-├─[:HAS_REFERENCE]→ Reference
-├─[:HAS_EXPLOIT]→ Exploit
-└─ Properties: epss_score, cvssScore, cvssSeverity
-
-Advisory
-├─[:REFERENCES]→ CVE
-├─[:HAS_WEAKNESS]→ CWE
-└─ ←[:HAS_ADVISORY]─ Package
+# Collect KEV catalog
+kev_collector = KEVCollector()
+stats = kev_collector.collect()
 ```
 
-## 🔧 Installation
+### Hub (Data Integration)
 
-Requires Python 3.10 or higher.
+```python
+from rota.hub import Neo4jConnection, DataLoader
+from pathlib import Path
 
-```bash
-# 1. Create and activate virtual environment
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-
-# 2. Install dependencies
-pip install -r requirements.txt
-
-# 3. Install package
-pip install -e .
+# Connect to Neo4j
+with Neo4jConnection() as conn:
+    loader = DataLoader(conn)
+    
+    # Load CVE data
+    stats = loader.load_cve_data(Path("data/raw/cve/cves.jsonl"))
+    
+    # Load EPSS data
+    stats = loader.load_epss_data(Path("data/raw/epss/epss.jsonl"))
+    
+    # Load KEV data
+    stats = loader.load_kev_data(Path("data/raw/kev/kev.jsonl"))
 ```
 
-## ⚙️ Configuration
+### Wheel (Clustering)
 
-Create a `.env` file with required environment variables:
+```python
+from rota.wheel import VulnerabilityClusterer, FeatureExtractor
 
-```bash
-# Copy example file
-cp .env.example .env
+# Extract features
+extractor = FeatureExtractor()
+features = extractor.extract_from_neo4j()
 
-# Edit .env file
-# NEO4J_URI=neo4j+s://xxxxx.databases.neo4j.io
-# NEO4J_USERNAME=neo4j
-# NEO4J_PASSWORD=your-password
-# GITHUB_TOKEN=your-github-token (optional)
-# GOOGLE_API_KEY=your-gemini-key (optional)
+# Cluster vulnerabilities
+clusterer = VulnerabilityClusterer(method="dbscan")
+clusterer.fit(features)
+clusters = clusterer.predict(features)
 ```
 
-## 📊 Data Collection
+### Oracle (Prediction)
 
-### 1. Collect CVE Data
+```python
+from rota.oracle import VulnerabilityPredictor
 
-```bash
-python scripts/collect_cve_data.py config/cve_test_config.yaml
-python scripts/load_cve_to_neo4j.py data/raw/cve_data.jsonl
+# Predict exploitation risk
+predictor = VulnerabilityPredictor()
+result = predictor.predict("CVE-2024-1234")
+
+print(f"Risk Score: {result['risk_score']}")
+print(f"Confidence: {result['confidence']}")
+print(f"Recommendation: {result['recommendation']}")
 ```
 
-### 2. Collect GitHub Advisories
+### Axle (Evaluation)
 
-```bash
-python scripts/collect_github_advisory.py config/github_advisory_config.yaml
-python scripts/load_advisory_to_neo4j.py data/raw/github_advisory.jsonl
+```python
+from rota.axle import TemporalValidator
+from datetime import datetime
+
+# Validate predictions with temporal awareness
+validator = TemporalValidator(cutoff_date=datetime(2024, 1, 1))
+metrics = validator.validate(predictions, ground_truth)
+
+print(f"Precision: {metrics['precision']}")
+print(f"Recall: {metrics['recall']}")
+print(f"Lead Time: {metrics['lead_time_days']} days")
 ```
 
-### 3. Collect EPSS Scores
+## 🔧 Configuration
 
-```bash
-python scripts/collect_epss.py config/epss_config.yaml
-python scripts/load_epss_to_neo4j.py data/raw/epss_scores.jsonl
+Create a `config.yaml` file:
+
+```yaml
+# Data directories
+data_dir: data
+raw_dir: data/raw
+processed_dir: data/processed
+
+# Neo4j configuration
+neo4j_uri: bolt://localhost:7687
+neo4j_user: neo4j
+neo4j_password: your_password
+
+# Collection settings
+request_timeout: 30.0
+rate_limit_sleep: 1.0
+
+# Clustering settings
+clustering_method: dbscan
+min_cluster_size: 5
+
+# Prediction settings
+risk_threshold: 0.7
+confidence_threshold: 0.6
 ```
 
-### 4. Collect Exploit Database
+Load configuration:
 
-```bash
-python scripts/collect_exploits.py config/exploit_config.yaml
-python scripts/load_exploits_to_neo4j.py data/raw/exploits.jsonl
+```python
+from rota.config import load_config
+from pathlib import Path
+
+config = load_config(Path("config.yaml"))
 ```
-
-## 🔍 Neo4j Query Examples
-
-### Find High-Risk CVEs
-
-```cypher
-// CVEs with high EPSS scores and available exploits
-MATCH (c:CVE)-[:HAS_EXPLOIT]->(e:Exploit)
-WHERE c.epss_score > 0.5
-RETURN c.id, c.epss_score, c.cvssScore, count(e) as exploit_count
-ORDER BY c.epss_score DESC
-```
-
-### Analyze Log4Shell Ecosystem
-
-```cypher
-MATCH path = (v:Vendor)-[:PRODUCES]->(p:Product)-[:HAS_VERSION]->(cpe:CPE)
-              <-[:AFFECTS]-(c:CVE {id: 'CVE-2021-44228'})-[:HAS_EXPLOIT]->(e:Exploit)
-RETURN path LIMIT 50
-```
-
-### Product Vulnerability Analysis
-
-```cypher
-MATCH (v:Vendor {name: 'apache'})-[:PRODUCES]->(p:Product)
-      -[:HAS_VERSION]->(cpe:CPE)<-[:AFFECTS]-(c:CVE)
-RETURN p.name, count(DISTINCT c) as vuln_count, 
-       avg(c.cvssScore) as avg_cvss, avg(c.epss_score) as avg_epss
-ORDER BY vuln_count DESC
-```
-
-## 📁 Project Structure
-
-```
-rota/
-├── src/rota/                       # Python package
-│   ├── spokes/                     # Data collectors
-│   │   ├── cve.py                  # NVD CVE collector
-│   │   ├── advisory.py             # GitHub Advisory collector
-│   │   ├── epss.py                 # EPSS score collector
-│   │   └── exploits.py             # Exploit-DB collector
-│   ├── hub/                        # Data integration
-│   │   ├── neo4j.py                # Neo4j graph manager
-│   │   └── storage.py              # Data storage
-│   ├── wheel/                      # Pattern analysis
-│   │   ├── patterns.py             # Pattern detection
-│   │   └── cluster.py              # Clustering
-│   ├── oracle/                     # Prediction engine
-│   │   ├── predictor.py            # Main predictor
-│   │   └── risk_score.py           # Risk scoring
-│   └── axle/                       # Validation framework
-│       ├── validator.py            # Historical validation
-│       └── metrics.py              # Performance metrics
-├── scripts/                        # Execution scripts
-├── config/                         # Configuration files
-└── docs/                           # Documentation
-```
-
-## 🌍 Environment Variables
-
-- `NEO4J_URI`: Neo4j database URI
-- `NEO4J_USERNAME`: Neo4j username (default: neo4j)
-- `NEO4J_PASSWORD`: Neo4j password
-- `GITHUB_TOKEN`: GitHub API token (optional, improves rate limits)
-- `NVD_API_KEY`: NVD API key (optional, faster collection)
-- `GOOGLE_API_KEY`: Google Gemini API key (optional, for Graphiti)
 
 ## 📚 Documentation
 
-- [Quick Start Guide](HOW_TO_PUBLISH.md)
-- [Paper Evaluation Framework](docs/PAPER_FRAMEWORK_SUMMARY.md)
-- [Graphiti Comparison](docs/graphiti_comparison.md)
-- [Data Collection Overview](docs/data_collection_overview.md)
+- [Architecture Overview](docs/architecture.md)
+- [Data Collection Guide](docs/guides/data-collection.md)
+- [Clustering Guide](docs/guides/clustering.md)
+- [Prediction Guide](docs/guides/prediction.md)
+- [Evaluation Guide](docs/guides/evaluation.md)
+- [API Reference](docs/api/)
+
+## 🔬 Research
+
+ROTA is designed for security research with focus on:
+
+- **Temporal Validation**: Prevent data leakage in historical analysis
+- **Behavioral Signals**: GitHub activity, commit patterns, issue discussions
+- **Multi-Modal Learning**: Code, text, graph, and time-series signals
+- **Explainable Predictions**: Understand why vulnerabilities are flagged
+
+### Research Directions
+
+1. **LLM-based Causal Reasoning**: Explain why vulnerabilities occur
+2. **Temporal Knowledge Graphs**: Model vulnerability evolution over time
+3. **Active Learning**: Efficient project selection for analysis
+4. **Multi-Modal Fusion**: Combine code, text, graph, and temporal signals
+
+See [Research Directions](docs/research/directions.md) for details.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit issues and pull requests.
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
+## 📧 Contact
+
+- **Author**: Susie Choi
+- **GitHub**: [susie-Choi/rota](https://github.com/susie-Choi/rota)
+- **Issues**: [GitHub Issues](https://github.com/susie-Choi/rota/issues)
+
 ## 🙏 Acknowledgments
 
-This project is part of ongoing research on LLM-based pre-signal analysis for predicting potential vulnerabilities in software ecosystems.
+- **NVD**: National Vulnerability Database
+- **FIRST**: Forum of Incident Response and Security Teams (EPSS)
+- **CISA**: Cybersecurity and Infrastructure Security Agency (KEV)
+- **Exploit-DB**: Offensive Security
 
-## 📈 Roadmap
+## 📊 Citation
 
-- ✅ Multi-source data integration (CVE, Advisory, EPSS, Exploit)
-- ✅ Neo4j knowledge graph construction
-- ✅ Historical validation framework
-- ✅ PyPI package release
-- 🔄 Real-time prediction optimization
-- 📋 LLM-based risk inference module
-- 🎨 Visualization dashboard
+If you use ROTA in your research, please cite:
+
+```bibtex
+@software{rota2024,
+  title = {ROTA: Real-time Offensive Threat Assessment},
+  author = {Choi, Susie},
+  year = {2024},
+  url = {https://github.com/susie-Choi/rota}
+}
+```
 
 ---
 
-**Install now**: `pip install rota`
-
-**Star us on GitHub**: ⭐ https://github.com/susie-Choi/rota
+**ROTA v0.1.2** - Real-time Offensive Threat Assessment
