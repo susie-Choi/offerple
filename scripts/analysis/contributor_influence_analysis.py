@@ -18,7 +18,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class ContributorInfluenceAnalyzer:
-    def __init__(self, neo4j_uri="neo4j+s://26e236b3.databases.neo4j.io", neo4j_user="neo4j", neo4j_password="yc-TW0XnNO3rV9u0mSR59BVHxlyeJjTC8ngO3QhbkVw"):
+    def __init__(self, neo4j_uri=None, neo4j_user=None, neo4j_password=None):
+        neo4j_uri = neo4j_uri or os.getenv("NEO4J_URI")
+        neo4j_user = neo4j_user or os.getenv("NEO4J_USERNAME", "neo4j")
+        neo4j_password = neo4j_password or os.getenv("NEO4J_PASSWORD")
         self.driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
         
     def close(self):
@@ -360,9 +363,9 @@ def main():
     logger.info("Starting contributor influence analysis...")
     
     # 환경 변수에서 Neo4j 연결 정보 가져오기
-    neo4j_uri = os.getenv("NEO4J_URI", "neo4j+s://26e236b3.databases.neo4j.io")
+    neo4j_uri = os.getenv("NEO4J_URI")
     neo4j_user = os.getenv("NEO4J_USERNAME", "neo4j")
-    neo4j_password = os.getenv("NEO4J_PASSWORD", "yc-TW0XnNO3rV9u0mSR59BVHxlyeJjTC8ngO3QhbkVw")
+    neo4j_password = os.getenv("NEO4J_PASSWORD")
     
     analyzer = ContributorInfluenceAnalyzer(neo4j_uri, neo4j_user, neo4j_password)
     
