@@ -112,6 +112,7 @@ class CVEGraphLoader:
 
             # Add CWE relationships
             weaknesses = cve_data.get("weaknesses", [])
+            cwe_count = 0
             for weakness in weaknesses:
                 for desc in weakness.get("description", []):
                     cwe_id = desc.get("value")
@@ -119,13 +120,20 @@ class CVEGraphLoader:
                         session.run(
                             """
                             MERGE (w:CWE {id: $cwe_id})
+                            ON CREATE SET w.source = $source, w.type = $type
                             WITH w
                             MATCH (c:CVE {id: $cve_id})
                             MERGE (c)-[:HAS_WEAKNESS]->(w)
                             """,
                             cve_id=cve_id,
                             cwe_id=cwe_id,
+                            source=weakness.get("source", ""),
+                            type=weakness.get("type", ""),
                         )
+                        cwe_count += 1
+            
+            # Return CWE count for statistics
+            return cwe_count
 
             # Add CPE (affected products) relationships
             configurations = cve_data.get("configurations", [])
@@ -183,10 +191,12 @@ class CVEGraphLoader:
                         source=ref.get("source"),
                     )
 
-    def load_from_jsonl(self, jsonl_path: Path) -> None:
+    def load_from_jsonl(self, jsonl_path: Path) -> Dict[str, int]:
         """Load CVE data from a JSONL file."""
         logger.info(f"Loading CVE data from {jsonl_path}")
         count = 0
+        cve_with_cwe = 0
+        total_cwe_links = 0
 
         with jsonl_path.open("r", encoding="utf-8") as f:
             for line in f:
@@ -197,14 +207,26 @@ class CVEGraphLoader:
                 for vuln in vulnerabilities:
                     cve_data = vuln.get("cve", {})
                     try:
-                        self.load_cve(cve_data)
+                        cwe_count = self.load_cve(cve_data)
                         count += 1
-                        if count % 10 == 0:
-                            logger.info(f"Loaded {count} CVEs...")
+                        if cwe_count > 0:
+                            cve_with_cwe += 1
+                            total_cwe_links += cwe_count
+                        if count % 100 == 0:
+                            logger.info(f"Loaded {count} CVEs... ({cve_with_cwe} with CWE, {total_cwe_links} total links)")
                     except Exception as e:
-                        logger.error(f"Error loading CVE: {e}")
+                        logger.error(f"Error loading CVE {cve_data.get('id', 'unknown')}: {e}")
 
-        logger.info(f"Finished loading {count} CVEs")
+        logger.info(f"✓ Finished loading {count} CVEs")
+        logger.info(f"  - CVEs with CWE: {cve_with_cwe} ({cve_with_cwe/count*100:.1f}%)")
+        logger.info(f"  - Total CWE links: {total_cwe_links}")
+        logger.info(f"  - Avg CWE per CVE: {total_cwe_links/cve_with_cwe:.2f}" if cve_with_cwe > 0 else "  - No CWE links")
+        
+        return {
+            "total_cves": count,
+            "cves_with_cwe": cve_with_cwe,
+            "total_cwe_links": total_cwe_links
+        }
 
 
 def main():

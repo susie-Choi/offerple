@@ -1,10 +1,13 @@
 """
 Check what types of attack techniques are in our collected data
 """
+import os
 from neo4j import GraphDatabase
+from dotenv import load_dotenv
 
 def check_cwe_types():
-    import os
+    load_dotenv()
+    
     neo4j_uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
     neo4j_user = os.getenv("NEO4J_USERNAME", "neo4j")
     neo4j_password = os.getenv("NEO4J_PASSWORD")
