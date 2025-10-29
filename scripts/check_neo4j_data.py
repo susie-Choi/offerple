@@ -6,7 +6,7 @@ from neo4j import GraphDatabase
 load_dotenv()
 
 NEO4J_URI = os.getenv("NEO4J_URI")
-NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+NEO4J_USER = os.getenv("NEO4J_USERNAME", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 
 def check_data():
@@ -29,34 +29,34 @@ def check_data():
         for record in result:
             print(f"  {record['type']}: {record['count']}")
         
-        # Sample some Signal nodes
+        # Sample some GitHubSignal nodes
         print("\n" + "=" * 80)
-        print("Sample Signal Nodes (first 5)")
+        print("Sample GitHubSignal Nodes (first 5)")
         print("=" * 80)
         result = session.run("""
-            MATCH (s:Signal)
-            RETURN s.signal_id as id, s.signal_type as type, 
-                   s.project as project, s.timestamp as timestamp
+            MATCH (s:GitHubSignal)
+            RETURN s.collected_at as collected_at, s.days as days, 
+                   s.commit_count as commit_count, s.security_commits as security_commits
             LIMIT 5
         """)
         for record in result:
-            print(f"  ID: {record['id']}")
-            print(f"    Type: {record['type']}")
-            print(f"    Project: {record['project']}")
-            print(f"    Timestamp: {record['timestamp']}")
+            print(f"  Collected: {record['collected_at']}")
+            print(f"    Days: {record['days']}")
+            print(f"    Commits: {record['commit_count']}")
+            print(f"    Security Commits: {record['security_commits']}")
             print()
         
-        # Sample some Project nodes
+        # Sample some Package nodes
         print("=" * 80)
-        print("Sample Project Nodes (first 5)")
+        print("Sample Package Nodes (first 5)")
         print("=" * 80)
         result = session.run("""
-            MATCH (p:Project)
-            RETURN p.name as name, p.ecosystem as ecosystem
+            MATCH (p:Package)
+            RETURN p.name as name
             LIMIT 5
         """)
         for record in result:
-            print(f"  {record['name']} ({record['ecosystem']})")
+            print(f"  {record['name']}")
     
     driver.close()
     print("\n" + "=" * 80)

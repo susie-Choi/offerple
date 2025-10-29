@@ -86,7 +86,7 @@ Unlike traditional vulnerability scanners that detect **known** CVEs, ROTA predi
 
 **Purpose**: LLM-based vulnerability risk prediction
 
-**Technology**: Google Gemini 2.0 Flash
+**Technology**: Google Gemini 2.5 Flash
 
 #### 3.1 Commit Analyzer
 

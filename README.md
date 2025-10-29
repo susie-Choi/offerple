@@ -1,6 +1,6 @@
 # ROTA - Real-time Offensive Threat Assessment
 
-[![PyPI version](https://badge.fury.io/py/rota.svg)](https://badge.fury.io/py/rota)
+[![PyPI version](https://img.shields.io/pypi/v/rota.svg)](https://pypi.org/project/rota/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -65,32 +65,39 @@ NEO4J_PASSWORD=your_password
 ### Basic Usage
 
 ```bash
-# Collect CVE data
-rota spokes collect-cve --start-date 2025-01-01 --end-date 2025-01-31
+# 1. Collect CVE data
+python scripts/collection/collect_bulk_cve.py
 
-# Collect EPSS scores
-rota spokes collect-epss --cve-ids CVE-2025-1234
+# 2. Collect EPSS scores
+python scripts/collection/collect_epss_bulk.py
 
-# Collect CISA KEV catalog
-rota spokes collect-kev
+# 3. Collect KEV catalog
+python scripts/collection/collect_kev.py
 
-# Collect GitHub behavioral signals
-rota spokes collect-github django/django --days 30
+# 4. Collect GitHub commits for specific CVEs
+python scripts/collection/collect_github_commits_by_cve.py
 
-# Load data into Neo4j
-rota hub load-cve data/raw/cve/cves_20250127.jsonl
-rota hub load-epss data/raw/epss/epss_20250127.jsonl
-rota hub load-kev data/raw/kev/kev_20250127.jsonl
-rota hub load-github data/raw/github/django_django_signals.jsonl
+# 5. Collect exploits
+python scripts/collection/collect_exploits_bulk.py
 
-# Predict vulnerability risk
-rota oracle predict django/django --days 7
+# 6. Load all data into Neo4j (with automatic time filtering)
+python scripts/loading/load_all_data.py
 
-# Check hub status
-rota hub status
+# 7. Check data status
+python scripts/check_neo4j_data.py
+
+# 8. Predict vulnerability risk (coming soon)
+# rota oracle predict django/django --days 7
 ```
 
-## 📊 Data Sources
+**Important Notes**:
+- Commits are automatically filtered to ±180 days around CVE published date
+- Only CVE-related commits are loaded (from `data/raw/github/commits_by_cve/`)
+- Duplicate commits are automatically skipped
+
+## 📊 Data Sources & Current Status
+
+### Data Sources
 
 ROTA integrates multiple vulnerability data sources:
 
@@ -99,9 +106,67 @@ ROTA integrates multiple vulnerability data sources:
 | **CVE/NVD** | National Vulnerability Database | All published CVEs | ✅ Working |
 | **EPSS** | Exploit Prediction Scoring System | Daily probability scores | ✅ Working |
 | **KEV** | CISA Known Exploited Vulnerabilities | Government-verified exploits | ✅ Working |
-| **GitHub Signals** | Behavioral signals from repositories | Commits, PRs, Issues | ✅ Working |
+| **GitHub Commits** | Repository commit history | CVE-related commits | ✅ Working |
 | **GitHub Advisory** | Package-level security advisories | npm, PyPI, Maven, etc. | ✅ Working |
 | **Exploit-DB** | Public exploit database | Proof-of-concept exploits | ✅ Working |
+
+### Current Neo4j Database Status
+
+**Last Updated**: 2025-10-28
+
+| Node Type | Count | Description |
+|-----------|-------|-------------|
+| CVE | 11,441 | Vulnerability records from NVD |
+| Commit | 35,080 | GitHub commits (±180 days around CVE published date) |
+| KEV | 1,666 | CISA Known Exploited Vulnerabilities |
+| CWE | 969 | Common Weakness Enumeration |
+| CPE | 804 | Common Platform Enumeration |
+| Product | 276 | Affected products |
+| Reference | 362 | External references |
+| Consequence | 71 | Impact consequences |
+| Vendor | 36 | Software vendors |
+| Package | 33 | Software packages |
+| Exploit | 30 | Public exploits |
+| Advisory | 3 | GitHub security advisories |
+| GitHubSignal | 1 | Behavioral signals |
+
+**Key Relationships**:
+- `HAS_COMMIT`: 35,080 (CVE → Commit)
+- `AFFECTS`: 891 (CVE → Product/Package)
+- `HAS_KEV`: 9 (CVE → KEV)
+- `HAS_EXPLOIT`: 141 (CVE → Exploit)
+
+### Data Collection Strategy
+
+**Commit Data Philosophy**:
+- Only CVE-related commits are stored
+- Time window: ±180 days around CVE published date
+- Purpose: Identify vulnerability-introducing commits
+- Current CVEs with commits: 3 (CVE-2011-3188, CVE-2012-3503, CVE-2012-4406)
+
+**Why ±180 days?**
+- Captures 92.4% of relevant commits
+- Balances data completeness vs. storage efficiency
+- Focuses on vulnerability development period
+
+### Data Directory Structure
+
+```
+data/
+├── raw/                          # Raw collected data
+│   ├── cve/                      # CVE data from NVD
+│   ├── epss/                     # EPSS scores
+│   ├── kev/                      # KEV catalog
+│   ├── exploits/                 # Exploit-DB data
+│   ├── advisory/                 # GitHub advisories
+│   └── github/
+│       ├── commits_by_cve/       # CVE-specific commits (USED)
+│       ├── commits/              # General commits (NOT USED)
+│       └── commits_smart/        # Smart-collected commits (NOT USED)
+└── processed/                    # Processed/analyzed data
+```
+
+**Important**: Only `commits_by_cve/` directory is loaded into Neo4j with time filtering
 
 ## 🏗️ Architecture
 
@@ -270,6 +335,39 @@ config = load_config(Path("config.yaml"))
 - [Prediction Guide](docs/guides/prediction.md)
 - [Evaluation Guide](docs/guides/evaluation.md)
 - [API Reference](docs/api/)
+
+## 🗄️ Data Management
+
+### Check Current Data Status
+
+```bash
+# Check Neo4j database status
+python scripts/check_neo4j_data.py
+```
+
+### Reload Commit Data
+
+If you need to reload commit data with different time windows:
+
+```bash
+# Clear and reload commits with ±180 days window (default)
+python scripts/loading/clear_and_reload_commits.py
+
+# Analyze commit distribution before reloading
+python scripts/loading/analyze_cve_commit_files.py
+```
+
+### Load All Data from Scratch
+
+```bash
+# Load all data types into Neo4j
+python scripts/loading/load_all_data.py
+```
+
+**Note**: The loader automatically:
+- Filters commits to ±180 days around CVE published date
+- Creates CVE → Commit relationships
+- Skips duplicate entries
 
 ## 🧪 Testing
 

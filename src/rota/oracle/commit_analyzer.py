@@ -47,7 +47,7 @@ class CommitAnalyzer:
         self,
         github_token: Optional[str] = None,
         gemini_api_key: Optional[str] = None,
-        model: str = "gemini-2.0-flash-exp"
+        model: str = "gemini-2.5-flash"
     ):
         """
         Initialize commit analyzer.

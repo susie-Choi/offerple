@@ -1,66 +1,60 @@
-# Security Vulnerability Dashboard
+# ROTA Dashboard
 
-Interactive dashboard for exploring the security vulnerability knowledge graph.
+Interactive Neo4j graph visualization using neovis.js
 
 ## Features
 
-- **Overview**: High-level statistics and high-risk CVEs
-- **CVE Explorer**: Search and explore individual CVEs with exploits and affected products
-- **Risk Analysis**: EPSS score distribution and severity analysis
-- **Exploit Database**: Browse available exploits
-- **Product Security**: Analyze vulnerabilities by vendor/product
+- 🔍 **CVE Search**: Search and explore specific CVEs
+- 📊 **High Risk Analysis**: View CVEs with high EPSS scores
+- 💣 **Exploit Tracking**: See CVEs with known exploits
+- 🎯 **Interactive Graph**: Neo4j Aura-style visualization
+- 🔗 **Relationship Mapping**: CVE → Exploit → Advisory → Commit connections
 
-## Installation
+## Usage
 
+### Option 1: Open Directly
+Simply open `index.html` in your browser.
+
+### Option 2: Local Server
 ```bash
-pip install streamlit pandas
+# Python
+python -m http.server 8000
+
+# Node.js
+npx http-server
+
+# Then open: http://localhost:8000
 ```
 
-## Running the Dashboard
+## Views
 
-```bash
-# From the project root
-streamlit run dashboard/app.py
+1. **Overview**: First 100 nodes and relationships
+2. **Search CVE**: Find specific CVE by ID (e.g., CVE-2021-44228)
+3. **High Risk CVEs**: CVEs with EPSS score > 0.5
+4. **CVEs with Exploits**: CVEs that have known exploits
+5. **Recent CVEs**: CVEs published in 2024
 
-# Or from the dashboard directory
-cd dashboard
-streamlit run app.py
-```
+## Node Colors
 
-The dashboard will open in your browser at `http://localhost:8501`
+- 🔴 **Red**: CVE
+- 🔵 **Cyan**: Exploit
+- 🟢 **Green**: Advisory
+- 🟠 **Pink**: Package
+- 🟣 **Purple**: Commit
 
 ## Configuration
 
-The dashboard uses the same `.env` file as the rest of the project:
-
-```bash
-NEO4J_URI=neo4j+s://xxxxx.databases.neo4j.io
-NEO4J_USERNAME=neo4j
-NEO4J_PASSWORD=your-password
+Neo4j credentials are in `index.html`. Update if needed:
+```javascript
+neo4j: {
+    serverUrl: "neo4j+s://your-instance.databases.neo4j.io",
+    serverUser: "neo4j",
+    serverPassword: "your-password"
+}
 ```
 
-## Screenshots
+## Requirements
 
-### Overview Page
-- Total counts of CVEs, Exploits, Advisories, and Packages
-- High-risk CVEs with EPSS > 0.5
-- CVEs with available exploits
-
-### CVE Explorer
-- Search by CVE ID
-- View CVSS and EPSS scores
-- List of available exploits
-- Affected products and vendors
-
-### Risk Analysis
-- EPSS score distribution chart
-- Severity distribution (CRITICAL, HIGH, MEDIUM, LOW)
-
-### Exploit Database
-- Browse recent exploits
-- Filter by CVE, author, or type
-
-### Product Security
-- Analyze vulnerabilities by vendor
-- View product-specific CVE lists
-- Average CVSS and EPSS scores per product
+- Modern web browser
+- Internet connection (for neovis.js CDN)
+- Neo4j database with loaded data

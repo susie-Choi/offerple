@@ -13,18 +13,22 @@ Collects vulnerability data from multiple sources:
 from .base import BaseCollector
 from .cve import CVECollector
 from .epss import EPSSCollector
+from .exploit_db import ExploitDBCollector
+from .github import GitHubSignalsCollector
+from .github_advisory import GitHubAdvisoryCollector
 from .kev import KEVCollector
 from .cwe import CWECollector
-from .github import GitHubSignalsCollector
 from .package import PackageCollector, DependencyCollector
 
 __all__ = [
     'BaseCollector',
     'CVECollector',
     'EPSSCollector',
+    'ExploitDBCollector',
+    'GitHubSignalsCollector',
+    'GitHubAdvisoryCollector',
     'KEVCollector',
     'CWECollector',
-    'GitHubSignalsCollector',
     'PackageCollector',
     'DependencyCollector',
 ]

@@ -451,7 +451,7 @@ logging.basicConfig(level=logging.DEBUG)
 # Retry with different model
 oracle = IntegratedOracle(
     gemini_api_key="...",
-    # Model will default to gemini-2.0-flash-exp
+    # Model will default to gemini-2.5-flash
 )
 ```
 
