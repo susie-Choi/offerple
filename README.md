@@ -1,12 +1,24 @@
-# ROTA - Real-time Offensive Threat Assessment
+# ROTA - Real-time Opensource Threat Assessment
 
 [![PyPI version](https://img.shields.io/pypi/v/rota.svg)](https://pypi.org/project/rota/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**ROTA** is a research framework for predicting zero-day vulnerabilities using behavioral signals, clustering analysis, and temporal validation. It combines multiple data sources to identify high-risk vulnerabilities before they are actively exploited.
+**ROTA** is a research framework for detecting vulnerabilities in open-source supply chains **before CVE publication**. It combines GitHub commit analysis, Neo4j graph database, and LLM-based RAG (Retrieval-Augmented Generation) to identify vulnerability-related commits early and assess supply chain impact.
 
 ## 🎯 What is ROTA?
+
+ROTA addresses critical gaps in existing vulnerability detection tools:
+
+- **CVE-based tools** (GitHub Dependabot, Snyk) only detect vulnerabilities **after** CVE publication
+- **EPSS** predicts exploit probability but still requires CVE publication first
+- **Static analysis tools** miss supply chain propagation and temporal context
+
+ROTA detects vulnerability-related commits **before CVE publication** by analyzing:
+- Commit messages and code changes
+- GitHub behavioral signals (Issues, PRs, developer activity)
+- Supply chain dependencies and impact
+- Historical vulnerability patterns via RAG
 
 ROTA uses a wheel metaphor to represent its architecture:
 
@@ -329,12 +341,8 @@ config = load_config(Path("config.yaml"))
 
 ## 📚 Documentation
 
-- [Architecture Overview](docs/architecture.md)
-- [Data Collection Guide](docs/guides/data-collection.md)
-- [Clustering Guide](docs/guides/clustering.md)
-- [Prediction Guide](docs/guides/prediction.md)
-- [Evaluation Guide](docs/guides/evaluation.md)
-- [API Reference](docs/api/)
+- **[System Overview](docs/system-overview.md)** - Complete architecture and technical details
+- **[Usage Guide](docs/usage-guide.md)** - Step-by-step tutorials and API reference
 
 ## 🗄️ Data Management
 
@@ -406,25 +414,45 @@ COMPARISON:
 
 ## 🔬 Research
 
-ROTA is designed for security research with focus on:
+ROTA is designed for academic security research with focus on:
 
-- **Temporal Validation**: Prevent data leakage in historical analysis
-- **Behavioral Signals**: GitHub activity, commit patterns, issue discussions
-- **Multi-Modal Learning**: Code, text, graph, and time-series signals
-- **Explainable Predictions**: Understand why vulnerabilities are flagged
+### Research Questions
 
-### Research Directions
+**RQ1 (Supply Chain Propagation)**: Can graph-based analysis accurately predict vulnerability impact across dependency chains?
 
-1. **LLM-based Causal Reasoning**: Explain why vulnerabilities occur
-2. **Temporal Knowledge Graphs**: Model vulnerability evolution over time
-3. **Active Learning**: Efficient project selection for analysis
-4. **Multi-Modal Fusion**: Combine code, text, graph, and temporal signals
+**RQ2 (Early Detection)**: Can GitHub commit analysis detect vulnerability-related commits before CVE publication?
 
-See [Research Directions](docs/research/directions.md) for details.
+**RQ3 (Historical Pattern Learning)**: Can RAG-based LLM analysis learn from past vulnerability patterns to predict new ones?
+
+**RQ4 (Multi-signal Integration)**: Does integrating commit messages, code diffs, GitHub signals, and developer patterns outperform single-signal analysis?
+
+### Key Hypotheses
+
+**Commit-Level Hypotheses**:
+- **H1-1**: Security issues, PRs, and discussions increase 30-90 days before fix commits
+- **H1-2**: Vulnerability-introducing commits have significantly more code changes
+- **H1-3**: Vulnerabilities concentrate in specific file types (auth, validation, database)
+- **H1-4**: Learning CWE patterns enables high-accuracy prediction in new projects
+
+**Contributor-Level Hypotheses**:
+- **H2-1**: New contributors introduce vulnerabilities at higher rates
+- **H2-2**: Vulnerability introduction increases after core contributor departure
+- **H2-3**: Direct main branch commits have higher vulnerability rates than PR-reviewed commits
+
+**Supply Chain-Level Hypotheses**:
+- **H3-1**: Vulnerability impact grows exponentially with dependency depth (≥3)
+- **H3-2**: Vulnerabilities propagate rapidly through dependency chains
+- **H3-3**: Popular packages patch faster despite larger impact scope
+
+### Research Contributions
+
+1. **Pre-CVE Detection**: Detect vulnerability patterns at commit level before CVE publication
+2. **Multi-dimensional Analysis**: Integrate code changes, GitHub signals, supply chain impact, and temporal patterns
+3. **AI Agent Approach**: Provide clustering and embedding context to LLM for ecosystem-aware risk assessment
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome! Please open an issue or pull request on GitHub.
 
 ## 📄 License
 
@@ -458,16 +486,6 @@ If you use ROTA in your research, please cite:
 
 ---
 
-## 📚 Documentation
+**ROTA v0.2.0** - Real-time Opensource Threat Assessment
 
-- **[System Overview](docs/system-overview.md)** - Complete architecture and technical details
-- **[Usage Guide](docs/usage-guide.md)** - Step-by-step tutorials and API reference
-- [Architecture Overview](docs/architecture.md)
-- [Data Collection Guide](docs/guides/data-collection.md)
-- [Clustering Guide](docs/guides/clustering.md)
-- [Prediction Guide](docs/guides/prediction.md)
-- [Evaluation Guide](docs/guides/evaluation.md)
-
----
-
-**ROTA v0.2.0** - Real-time Offensive Threat Assessment
+*Detecting vulnerabilities before CVE publication through commit analysis and supply chain intelligence*
