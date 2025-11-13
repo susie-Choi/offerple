@@ -1,60 +1,75 @@
-# ROTA - Real-time Opensource Threat Assessment
+# LLMDump - Security Analysis for LLM-Generated Content
 
-[![PyPI version](https://img.shields.io/pypi/v/rota.svg)](https://pypi.org/project/rota/)
+[![PyPI version](https://img.shields.io/pypi/v/llmdump.svg)](https://pypi.org/project/llmdump/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**ROTA** is a research framework for detecting vulnerabilities in open-source supply chains **before CVE publication**. It combines GitHub commit analysis, Neo4j graph database, and LLM-based RAG (Retrieval-Augmented Generation) to identify vulnerability-related commits early and assess supply chain impact.
+**LLMDump** is a research framework for detecting security risks in **LLM-generated content** used in software development. As developers increasingly rely on AI assistants (ChatGPT, Copilot, DALL-E) to generate code and images, LLMDump identifies vulnerabilities, backdoors, and malicious content that may be inadvertently introduced into software supply chains.
 
-## 🎯 What is ROTA?
+## 🎯 What is LLMDump?
 
-ROTA addresses critical gaps in existing vulnerability detection tools:
+LLMDump addresses emerging security risks in the AI-assisted development era:
 
-- **CVE-based tools** (GitHub Dependabot, Snyk) only detect vulnerabilities **after** CVE publication
-- **EPSS** predicts exploit probability but still requires CVE publication first
-- **Static analysis tools** miss supply chain propagation and temporal context
+### The Problem
 
-ROTA detects vulnerability-related commits **before CVE publication** by analyzing:
-- Commit messages and code changes
-- GitHub behavioral signals (Issues, PRs, developer activity)
-- Supply chain dependencies and impact
-- Historical vulnerability patterns via RAG
+**Developers use LLMs to generate code and content**:
+- ChatGPT/Copilot for code generation
+- DALL-E/Midjourney for project images
+- LLM-generated content directly integrated into projects
 
-ROTA uses a wheel metaphor to represent its architecture:
+**Security Risks**:
+- **Vulnerable code**: LLMs trained on insecure code reproduce vulnerabilities
+- **Backdoor injection**: Adversarial prompts can insert malicious code
+- **Malicious images**: AI-generated images can hide payloads via steganography
+- **Supply chain propagation**: LLM-generated vulnerabilities spread across projects
+
+### LLMDump's Solution
+
+LLMDump detects and analyzes security risks in LLM-generated content:
+- **Code vulnerability detection**: Identifies security flaws in AI-generated code
+- **Backdoor detection**: Discovers hidden malicious functionality
+- **Image analysis**: Detects steganography and malicious payloads
+- **Supply chain tracking**: Monitors propagation of LLM-generated vulnerabilities
+
+LLMDump architecture for LLM-generated content security:
 
 ```
-                    ┌─────────────┐
-                    │   ORACLE    │
-                    │ (Prediction)│
-                    └──────┬──────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        │                  │                  │
-   ┌────▼────┐        ┌────▼────┐       ┌────▼────┐
-   │  WHEEL  │        │   HUB   │       │  AXLE   │
-   │(Cluster)│◄───────┤ (Neo4j) │──────►│  (Eval) │
-   └────▲────┘        └────▲────┘       └─────────┘
-        │                  │
-        └──────────────────┼──────────────────┘
-                           │
-                      ┌────▼────┐
-                      │ SPOKES  │
-                      │ (Data)  │
-                      └─────────┘
+                    ┌─────────────────────┐
+                    │   LLM ANALYZER      │
+                    │  (Security Check)   │
+                    └──────────┬──────────┘
+                               │
+        ┌──────────────────────┼──────────────────────┐
+        │                      │                      │
+   ┌────▼────────┐      ┌──────▼──────┐      ┌──────▼──────┐
+   │    CODE     │      │    IMAGE    │      │   SUPPLY    │
+   │  ANALYZER   │      │  ANALYZER   │      │    CHAIN    │
+   │             │      │             │      │   TRACKER   │
+   │ - Vulns     │      │ - Stego     │      │             │
+   │ - Backdoors │      │ - Payloads  │      │ - Impact    │
+   │ - Patterns  │      │ - Metadata  │      │ - Propagate │
+   └────▲────────┘      └──────▲──────┘      └──────▲──────┘
+        │                      │                      │
+        └──────────────────────┼──────────────────────┘
+                               │
+                        ┌──────▼──────┐
+                        │  DATA HUB   │
+                        │   (Neo4j)   │
+                        └─────────────┘
 ```
 
-- **Spokes**: Collect data from multiple sources (CVE, EPSS, KEV, etc.)
-- **Hub**: Central Neo4j graph database for data integration
-- **Wheel**: Clustering and pattern discovery
-- **Oracle**: Prediction and risk assessment
-- **Axle**: Evaluation and temporal validation
+- **LLM Analyzer**: Detects LLM-generated content and security risks
+- **Code Analyzer**: Identifies vulnerabilities and backdoors in AI-generated code
+- **Image Analyzer**: Detects steganography and malicious payloads in AI images
+- **Supply Chain Tracker**: Monitors propagation of LLM-generated vulnerabilities
+- **Data Hub**: Neo4j graph database for relationship analysis
 
 ## 🚀 Quick Start
 
 ### Installation
 
 ```bash
-pip install rota
+pip install llmdump
 ```
 
 ### Environment Setup
@@ -77,29 +92,31 @@ NEO4J_PASSWORD=your_password
 ### Basic Usage
 
 ```bash
-# 1. Collect CVE data
-python scripts/collection/collect_bulk_cve.py
+# 1. Start Neo4j
+docker-compose up -d
 
-# 2. Collect EPSS scores
-python scripts/collection/collect_epss_bulk.py
+# 2. Check system status
+python src/scripts/check_status.py
 
-# 3. Collect KEV catalog
-python scripts/collection/collect_kev.py
+# 3. Collect all data
+python src/scripts/collect_data.py --all
 
-# 4. Collect GitHub commits for specific CVEs
-python scripts/collection/collect_github_commits_by_cve.py
+# 4. Load data to Neo4j
+python src/scripts/load_to_neo4j.py --all
 
-# 5. Collect exploits
-python scripts/collection/collect_exploits_bulk.py
+# 5. Verify data loaded
+python src/scripts/check_status.py --neo4j-only
+```
 
-# 6. Load all data into Neo4j (with automatic time filtering)
-python scripts/loading/load_all_data.py
+**Quick Commands**:
+```bash
+# Collect specific data source
+python src/scripts/collect_data.py --cve
+python src/scripts/collect_data.py --commits --repository django/django
 
-# 7. Check data status
-python scripts/check_neo4j_data.py
-
-# 8. Predict vulnerability risk (coming soon)
-# rota oracle predict django/django --days 7
+# Load specific data source
+python src/scripts/load_to_neo4j.py --cve
+python src/scripts/load_to_neo4j.py --commits
 ```
 
 **Important Notes**:
@@ -111,7 +128,9 @@ python scripts/check_neo4j_data.py
 
 ### Data Sources
 
-ROTA integrates multiple vulnerability data sources:
+#### Current Data Sources (Baseline)
+
+Historical vulnerability data for comparison and validation:
 
 | Source | Description | Coverage | Status |
 |--------|-------------|----------|--------|
@@ -119,8 +138,19 @@ ROTA integrates multiple vulnerability data sources:
 | **EPSS** | Exploit Prediction Scoring System | Daily probability scores | ✅ Working |
 | **KEV** | CISA Known Exploited Vulnerabilities | Government-verified exploits | ✅ Working |
 | **GitHub Commits** | Repository commit history | CVE-related commits | ✅ Working |
-| **GitHub Advisory** | Package-level security advisories | npm, PyPI, Maven, etc. | ✅ Working |
 | **Exploit-DB** | Public exploit database | Proof-of-concept exploits | ✅ Working |
+
+#### Primary Data Sources (LLM-Generated Content)
+
+| Source | Description | Target Count | Purpose |
+|--------|-------------|--------------|---------|
+| **LLM-Generated Code** | Code from ChatGPT, Copilot, Claude | 10,000+ samples | Vulnerability analysis |
+| **Adversarial Prompts** | Malicious prompt engineering | 1,000+ prompts | Backdoor injection study |
+| **AI-Generated Images** | Images from DALL-E, Midjourney | 5,000+ images | Steganography detection |
+| **Package Analysis** | Real packages with LLM content | 1,000+ packages | Supply chain impact |
+| **Developer Surveys** | LLM usage patterns | 500+ responses | Usage analysis |
+
+**Research Focus**: Detecting security risks in LLM-generated content used in software development. Analyzing vulnerabilities, backdoors, and malicious payloads in AI-generated code and images. See [docs/RESEARCH.md](docs/RESEARCH.md) for details.
 
 ### Current Neo4j Database Status
 
@@ -165,25 +195,65 @@ ROTA integrates multiple vulnerability data sources:
 
 ```
 data/
-├── raw/                          # Raw collected data
-│   ├── cve/                      # CVE data from NVD
-│   ├── epss/                     # EPSS scores
-│   ├── kev/                      # KEV catalog
-│   ├── exploits/                 # Exploit-DB data
-│   ├── advisory/                 # GitHub advisories
-│   └── github/
-│       ├── commits_by_cve/       # CVE-specific commits (USED)
-│       ├── commits/              # General commits (NOT USED)
-│       └── commits_smart/        # Smart-collected commits (NOT USED)
-└── processed/                    # Processed/analyzed data
+├── input/                        # Input data (consolidated)
+│   ├── cve.jsonl                 # CVE data from NVD
+│   ├── commits.jsonl             # GitHub commits
+│   ├── epss.jsonl                # EPSS scores
+│   ├── kev.jsonl                 # KEV catalog
+│   ├── exploits.jsonl            # Exploit-DB data
+│   └── advisory.jsonl            # GitHub advisories
+│
+├── output/                       # Analysis results
+│   ├── analysis/                 # Analysis outputs
+│   ├── predictions/              # Prediction results
+│   └── paper/                    # Paper-related data
+│
+├── multimodal/                   # Multimodal extension (planned)
+│   ├── apt/                      # APT malware samples
+│   │   ├── rokrat/               # RoKRAT samples
+│   │   ├── images/               # Extracted images
+│   │   └── similar/              # Similar APT families
+│   └── legitimate/               # Legitimate packages
+│       └── {package_name}/       # Package images & docs
+│
+└── archive/                      # Archived old structure
 ```
 
-**Important**: Only `commits_by_cve/` directory is loaded into Neo4j with time filtering
+**Current Status**: 
+- ✅ Core vulnerability data collected (`data/input/`)
+- 🔄 Multimodal APT detection in progress (see [Research Plan](docs/RESEARCH.md))
+
+### Future Data Collection (Multimodal Extension)
+
+**Planned APT Malware Samples**:
+- **RoKRAT samples**: 30-50 samples from Malware Bazaar
+- **Similar APT families**: BabyShark, AppleSeed, Konni (20-30 samples)
+- **Purpose**: Steganography detection, C&C identification
+
+**Planned Legitimate Package Data**:
+- **Package metadata**: 1,000 top PyPI packages
+- **Package images**: 5,000-10,000 images from GitHub repos
+- **Purpose**: Baseline for false positive reduction
+
+**Timeline**: See [docs/RESEARCH.md](docs/RESEARCH.md) for detailed research plan
 
 ## 🏗️ Architecture
 
 ### Spokes (Data Collection)
 
+**Using Unified Script** (Recommended):
+```bash
+# Collect all data sources
+python src/scripts/collect_data.py --all
+
+# Collect specific sources
+python src/scripts/collect_data.py --cve --start-date 2025-01-01 --end-date 2025-01-31
+python src/scripts/collect_data.py --epss
+python src/scripts/collect_data.py --kev
+python src/scripts/collect_data.py --commits --repository django/django --days-back 30
+```
+
+**Using Python API**:
 ```python
 from rota.spokes import CVECollector, EPSSCollector, KEVCollector
 from rota.spokes.github import GitHubSignalsCollector
@@ -196,14 +266,6 @@ stats = cve_collector.collect(
     end_date="2025-01-31"
 )
 
-# Collect EPSS scores
-epss_collector = EPSSCollector()
-stats = epss_collector.collect(cve_ids=["CVE-2025-1234"])
-
-# Collect KEV catalog
-kev_collector = KEVCollector()
-stats = kev_collector.collect()
-
 # Collect GitHub behavioral signals
 github_collector = GitHubSignalsCollector(token=os.getenv("GITHUB_TOKEN"))
 stats = github_collector.collect("django/django", days_back=30)
@@ -212,6 +274,17 @@ print(f"Collected {stats['total_commits']} commits, {stats['total_issues']} issu
 
 ### Hub (Data Integration)
 
+**Using Unified Script** (Recommended):
+```bash
+# Load all data sources
+python src/scripts/load_to_neo4j.py --all
+
+# Load specific sources
+python src/scripts/load_to_neo4j.py --cve
+python src/scripts/load_to_neo4j.py --commits
+```
+
+**Using Python API**:
 ```python
 from rota.hub import Neo4jConnection, DataLoader
 from pathlib import Path
@@ -221,13 +294,10 @@ with Neo4jConnection() as conn:
     loader = DataLoader(conn)
     
     # Load CVE data
-    stats = loader.load_cve_data(Path("data/raw/cve/cves.jsonl"))
+    stats = loader.load_cve_data(Path("data/input/cve.jsonl"))
     
     # Load EPSS data
-    stats = loader.load_epss_data(Path("data/raw/epss/epss.jsonl"))
-    
-    # Load KEV data
-    stats = loader.load_kev_data(Path("data/raw/kev/kev.jsonl"))
+    stats = loader.load_epss_data(Path("data/input/epss.jsonl"))
 ```
 
 ### Wheel (Clustering)
@@ -341,55 +411,99 @@ config = load_config(Path("config.yaml"))
 
 ## 📚 Documentation
 
-- **[System Overview](docs/system-overview.md)** - Complete architecture and technical details
-- **[Usage Guide](docs/usage-guide.md)** - Step-by-step tutorials and API reference
+- **[User Guide](docs/GUIDE.md)** - Complete guide for using ROTA
+- **[Development Guide](docs/DEVELOPMENT.md)** - Performance, releases, and temporal validation
+- **[Research Plan](docs/RESEARCH.md)** - RoKRAT APT detection research
 
 ## 🗄️ Data Management
 
-### Check Current Data Status
+ROTA provides unified scripts for easy data management.
+
+### Quick Workflow
 
 ```bash
-# Check Neo4j database status
-python scripts/check_neo4j_data.py
+# 1. Check system status
+python src/scripts/check_status.py
+
+# 2. Collect all data sources
+python src/scripts/collect_data.py --all
+
+# 3. Load to Neo4j
+python src/scripts/load_to_neo4j.py --all
+
+# 4. Verify
+python src/scripts/check_status.py --neo4j-only
 ```
 
-### Reload Commit Data
-
-If you need to reload commit data with different time windows:
+### Collect Data
 
 ```bash
-# Clear and reload commits with ±180 days window (default)
-python scripts/loading/clear_and_reload_commits.py
+# Collect all sources
+python src/scripts/collect_data.py --all
 
-# Analyze commit distribution before reloading
-python scripts/loading/analyze_cve_commit_files.py
+# Collect specific sources
+python src/scripts/collect_data.py --cve
+python src/scripts/collect_data.py --epss
+python src/scripts/collect_data.py --kev
+python src/scripts/collect_data.py --commits --repository django/django
+python src/scripts/collect_data.py --exploits
+python src/scripts/collect_data.py --advisory
+
+# With options
+python src/scripts/collect_data.py --cve --start-date 2024-01-01 --end-date 2024-12-31
+python src/scripts/collect_data.py --commits --repository flask/flask --days-back 30
 ```
 
-### Load All Data from Scratch
+### Load Data to Neo4j
 
 ```bash
-# Load all data types into Neo4j
-python scripts/loading/load_all_data.py
+# Load all data
+python src/scripts/load_to_neo4j.py --all
+
+# Load specific data
+python src/scripts/load_to_neo4j.py --cve
+python src/scripts/load_to_neo4j.py --epss
+python src/scripts/load_to_neo4j.py --commits
+
+# With custom connection
+python src/scripts/load_to_neo4j.py --all --uri bolt://localhost:7687 --password mypassword
 ```
 
-**Note**: The loader automatically:
-- Filters commits to ±180 days around CVE published date
-- Creates CVE → Commit relationships
-- Skips duplicate entries
+### Check Status
+
+```bash
+# Full system check
+python src/scripts/check_status.py
+
+# Check specific components
+python src/scripts/check_status.py --data-only
+python src/scripts/check_status.py --env-only
+python src/scripts/check_status.py --neo4j-only
+```
+
+**Features**:
+- Automatic data validation
+- Duplicate detection
+- Progress tracking
+- Error handling
+- Detailed statistics
 
 ## 🧪 Testing
 
-Run the test suite to verify your setup:
+Verify your ROTA setup:
 
 ```bash
-# Test full workflow (Spokes → Hub → Oracle)
-python tests/test_workflow.py
+# 1. Check system status
+python src/scripts/check_status.py
 
-# Compare Oracle predictions with/without RAG
-python tests/test_oracle_comparison.py
+# 2. Test data collection (small dataset)
+python src/scripts/collect_data.py --cve --start-date 2024-01-01 --end-date 2024-01-07
 
-# Check Neo4j data
-python scripts/check_neo4j_data.py
+# 3. Test Neo4j loading
+python src/scripts/load_to_neo4j.py --cve
+
+# 4. Verify Neo4j data
+python src/scripts/check_status.py --neo4j-only
 ```
 
 ### Test Results Example
@@ -414,41 +528,45 @@ COMPARISON:
 
 ## 🔬 Research
 
-ROTA is designed for academic security research with focus on:
+ROTA focuses on emerging security risks in AI-assisted software development:
 
 ### Research Questions
 
-**RQ1 (Supply Chain Propagation)**: Can graph-based analysis accurately predict vulnerability impact across dependency chains?
+**RQ1 (LLM Code Security)**: How frequently do LLMs generate code with security vulnerabilities?
 
-**RQ2 (Early Detection)**: Can GitHub commit analysis detect vulnerability-related commits before CVE publication?
+**RQ2 (Adversarial Prompts)**: Can adversarial prompts be used to inject backdoors into LLM-generated code?
 
-**RQ3 (Historical Pattern Learning)**: Can RAG-based LLM analysis learn from past vulnerability patterns to predict new ones?
+**RQ3 (Image Steganography)**: Can AI-generated images be used to hide malicious payloads via steganography?
 
-**RQ4 (Multi-signal Integration)**: Does integrating commit messages, code diffs, GitHub signals, and developer patterns outperform single-signal analysis?
+**RQ4 (Supply Chain Impact)**: How do LLM-generated vulnerabilities propagate through software supply chains?
+
+**RQ5 (Detection Methods)**: Can we automatically detect and verify security of LLM-generated content?
 
 ### Key Hypotheses
 
-**Commit-Level Hypotheses**:
-- **H1-1**: Security issues, PRs, and discussions increase 30-90 days before fix commits
-- **H1-2**: Vulnerability-introducing commits have significantly more code changes
-- **H1-3**: Vulnerabilities concentrate in specific file types (auth, validation, database)
-- **H1-4**: Learning CWE patterns enables high-accuracy prediction in new projects
+**LLM Code Generation**:
+- **H1-1**: LLMs reproduce vulnerabilities from training data at measurable rates
+- **H1-2**: Adversarial prompts can reliably inject backdoors into generated code
+- **H1-3**: LLM-generated code has distinct patterns that enable detection
+- **H1-4**: Security-focused prompts reduce but don't eliminate vulnerabilities
 
-**Contributor-Level Hypotheses**:
-- **H2-1**: New contributors introduce vulnerabilities at higher rates
-- **H2-2**: Vulnerability introduction increases after core contributor departure
-- **H2-3**: Direct main branch commits have higher vulnerability rates than PR-reviewed commits
+**LLM Image Generation**:
+- **H2-1**: AI-generated images can hide payloads with lower detectability than manual steganography
+- **H2-2**: Image generation models leave fingerprints that enable source attribution
+- **H2-3**: Metadata analysis can reveal malicious generation prompts
 
-**Supply Chain-Level Hypotheses**:
-- **H3-1**: Vulnerability impact grows exponentially with dependency depth (≥3)
-- **H3-2**: Vulnerabilities propagate rapidly through dependency chains
-- **H3-3**: Popular packages patch faster despite larger impact scope
+**Supply Chain Propagation**:
+- **H3-1**: LLM-generated code appears in production packages at increasing rates
+- **H3-2**: Vulnerabilities in LLM-generated code propagate faster than traditional vulnerabilities
+- **H3-3**: Developers trust LLM-generated code more than human-written code
 
 ### Research Contributions
 
-1. **Pre-CVE Detection**: Detect vulnerability patterns at commit level before CVE publication
-2. **Multi-dimensional Analysis**: Integrate code changes, GitHub signals, supply chain impact, and temporal patterns
-3. **AI Agent Approach**: Provide clustering and embedding context to LLM for ecosystem-aware risk assessment
+1. **First systematic study** of security risks in LLM-generated content for software development
+2. **Large-scale measurement** of vulnerabilities in AI-generated code (10,000+ samples)
+3. **Adversarial prompt engineering** techniques for backdoor injection
+4. **Automated detection system** for LLM-generated malicious content
+5. **Supply chain impact analysis** of AI-generated vulnerabilities
 
 ## 🤝 Contributing
 

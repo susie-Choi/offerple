@@ -3,9 +3,9 @@ requires = ["setuptools>=62", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rota"
-version = "0.2.0"
-description = "AI-powered zero-day vulnerability prediction system"
+name = "llmdump"
+version = "0.1.0"
+description = "Security analysis framework for LLM-generated content in software development"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -69,17 +69,17 @@ dashboard = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/susie-Choi/rota"
-Repository = "https://github.com/susie-Choi/rota"
-Documentation = "https://github.com/susie-Choi/rota#readme"
-"Bug Tracker" = "https://github.com/susie-Choi/rota/issues"
-Changelog = "https://github.com/susie-Choi/rota/releases"
+Homepage = "https://github.com/susie-Choi/llmdump"
+Repository = "https://github.com/susie-Choi/llmdump"
+Documentation = "https://github.com/susie-Choi/llmdump#readme"
+"Bug Tracker" = "https://github.com/susie-Choi/llmdump/issues"
+Changelog = "https://github.com/susie-Choi/llmdump/releases"
 
 [project.scripts]
-rota = "rota.cli:cli"
+llmdump = "llmdump.cli:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-rota = ["py.typed"]
+llmdump = ["py.typed"]
